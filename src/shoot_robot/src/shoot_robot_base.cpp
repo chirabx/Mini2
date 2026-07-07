@@ -53,23 +53,23 @@ int main(int argc, char** argv)
 
     ac.waitForServer();
 
-    Move2goal(ac, 0.72, 0.16, -1.5707);
+    Move2goal(ac, 2.44, 0.76, 0.7);//G
     shoot_client.call(empty_srv);
-    Move2goal(ac, 1.73, 0.28, 0.0);
+    Move2goal(ac, 2.42, -0.006, -0.86);//H
     shoot_client.call(empty_srv);
-    Move2goal(ac, 1.13, 1.98, 1.5707);
+    Move2goal(ac, 1.63, 0.017, -2.36);//I
     shoot_client.call(empty_srv);
-    Move2goal(ac, 1.6, 3.0, 0.0);
+    Move2goal(ac, 1.67, 2.39, 2.31);//D
     shoot_client.call(empty_srv);
-    Move2goal(ac, 3.0, 3.0, 1.5707);
+    Move2goal(ac, 2.48, 2.33, 0.84);//E
     shoot_client.call(empty_srv);
-    Move2goal(ac, 3.0, 1.6, 1.5707);
+    Move2goal(ac, 2.41, 1.48, -0.498);//F
     shoot_client.call(empty_srv);
-    Move2goal(ac, 3.0, 1.4, 1.5707);
+    Move2goal(ac, 0.14, 1.58, -2.31);//A
     shoot_client.call(empty_srv);
-    Move2goal(ac, 3.0, 0.0, 3.1415);
+    Move2goal(ac, 0.19, 2.47, 2.64);//B
     shoot_client.call(empty_srv);
-    Move2goal(ac, 1.6, 0.0, 3.1415);
+    Move2goal(ac, 1.00, 2.39, 0.94);//C
     shoot_client.call(empty_srv);
     
     move_base_msgs::MoveBaseGoal goal3;
