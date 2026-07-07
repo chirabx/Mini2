@@ -1,0 +1,8 @@
+<launch>
+  <include file="$(find zoo_robot)/launch/robot_lidar.launch" />
+  <include file="$(find robot_slam)/launch/navigation.launch" />
+
+  <include file="$(find orbbec_camera)/launch/dabai_dcw2.launch" />
+  <include file="$(find apriltags2_ros)/launch/continuous_detection.launch"/>
+  <include file="$(find shoot_robot)/launch/shoot_control.launch" />
+</launch>
