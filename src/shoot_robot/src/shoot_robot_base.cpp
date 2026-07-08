@@ -5,16 +5,94 @@
 #include <geometry_msgs/Quaternion.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <std_srvs/Empty.h>
+#include <geometry_msgs/Twist.h>
 
 using namespace std;
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
-ros::ServiceClient shoot_client;
-std_srvs::Empty empty_srv;
+void Move2goal(MoveBaseClient &ac, double x, double y, double yaw, string tag_name);
+void Move1goal(MoveBaseClient &ac, double x, double y, double yaw);
+void performRetryLogic(MoveBaseClient &ac, double x, double y, double yaw, const std::string &tag_name);
+void sleep(double second)
+{
+    ros::Duration(second).sleep();
+}
 
+// ========== 新增：摇摆射击函数 ==========
+void SwingAndShoot()
+{
+    ros::NodeHandle nh;
+    geometry_msgs::Twist vel_msg;
+    ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
+    ros::ServiceClient shoot_client = nh.serviceClient<std_srvs::Empty>("/shoot");
+    ros::ServiceClient close_client = nh.serviceClient<std_srvs::Empty>("/close");
+    std_srvs::Empty empty_srv;
+    ros::Rate loop_rate(10);
+    ros::service::waitForService("/shoot");
+    ros::service::waitForService("/close");
+    // 打开激光
+    shoot_client.call(empty_srv);
+    ROS_INFO("Laser ON, starting swing...");
+    // 参数：可调节
+    const double swing_speed = 0.2;      // 角速度 rad/s
+    const double swing_angle = 0.3149;   // 20度 = π/6 弧度
+    const int one_way_steps = (int)(swing_angle / swing_speed / 0.1);
+    // 左摆30度
+    vel_msg.angular.z = swing_speed;
+    for (int i = 0; i < one_way_steps && ros::ok(); i++)
+    {
+        pub.publish(vel_msg);
+        loop_rate.sleep();
+    }
+    // 右摆60度（左30° → 右30°）
+    vel_msg.angular.z = -swing_speed;
+    for (int i = 0; i < one_way_steps * 2 && ros::ok(); i++)
+    {
+        pub.publish(vel_msg);
+        loop_rate.sleep();
+    }
+    // 回正30度（右30° → 中心）
+    vel_msg.angular.z = swing_speed;
+    for (int i = 0; i < one_way_steps && ros::ok(); i++)
+    {
+        pub.publish(vel_msg);
+        loop_rate.sleep();
+    }
+    // 停止
+    vel_msg.angular.z = 0;
+    pub.publish(vel_msg);
+    // 关闭激光
+    close_client.call(empty_srv);
+    ROS_INFO("Laser OFF, swing complete.");
+}
 
-void Move2goal(MoveBaseClient& ac, double x, double y, double yaw)
+void performRetryLogic(MoveBaseClient &ac, double x, double y, double yaw, const std::string &tag_name)
+{
+    ros::NodeHandle nh;
+    geometry_msgs::Twist vel_msg;
+    ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
+    int count = 0;
+    ros::Rate loop_rate(10);
+
+    ROS_INFO("Executing backward retry logic...");
+    vel_msg.linear.x = -0.05;
+    count = 0;
+    while (ros::ok() && count < 10)
+    {
+        pub.publish(vel_msg);
+        loop_rate.sleep();
+        count++;
+    }
+    // Stop
+    vel_msg.linear.x = 0.0;
+    pub.publish(vel_msg);
+
+    ROS_INFO("Retrying to move to target point (%.3f, %.3f, %.3f)", x, y, yaw);
+    Move2goal(ac, x, y, yaw, tag_name);
+}
+
+void Move2goal(MoveBaseClient &ac, double x, double y, double yaw, string tag_name)
 {
     tf2::Quaternion quaternion;
     quaternion.setRPY(0, 0, yaw);
@@ -29,68 +107,126 @@ void Move2goal(MoveBaseClient& ac, double x, double y, double yaw)
     ROS_INFO("MoveBase Send Goal !!!");
     ac.waitForResult();
 
-    if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    actionlib::SimpleClientGoalState state = ac.getState();
+
+    switch (state.state_)
     {
-        ROS_INFO("The Goal 1 Reached Successfully!!!");
-        system("roslaunch shoot_robot shoot_tag_1.launch");
+    case actionlib::SimpleClientGoalState::SUCCEEDED:
+        ROS_INFO("Target point %s (%.3f, %.3f, %.3f) reached successfully!", tag_name.c_str(), x, y, yaw);
+        SwingAndShoot();
+        break;
+
+    case actionlib::SimpleClientGoalState::ABORTED:
+        ROS_WARN("Navigation aborted - possibly due to obstacles or path planning failure");
+        performRetryLogic(ac, x, y, yaw, tag_name);
+        break;
     }
-    else
-    {
-        ROS_WARN("The Goal Planning Failed for some reason");
-    }
+    // sleep(0.5);
 }
 
-int main(int argc, char** argv)
+void Move1goal(MoveBaseClient &ac, double x, double y, double yaw)
+{
+    tf2::Quaternion quaternion;
+    quaternion.setRPY(0, 0, yaw);
+    move_base_msgs::MoveBaseGoal goal;
+    goal.target_pose.pose.position.x = x;
+    goal.target_pose.pose.position.y = y;
+    goal.target_pose.pose.orientation.z = quaternion.z();
+    goal.target_pose.pose.orientation.w = quaternion.w();
+    goal.target_pose.header.frame_id = "map";
+    goal.target_pose.header.stamp = ros::Time::now();
+    ac.sendGoal(goal);
+    ROS_INFO("MoveBase Send Goal !!!");
+    ac.waitForResult();
+    // sleep(0.5);
+}
+int main(int argc, char **argv)
 {
     ros::init(argc, argv, "shoot_robot_base");
     ros::NodeHandle nh;
 
+    geometry_msgs::Twist vel_msg;
+    ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
     ros::ServiceClient shoot_close_client;
     std_srvs::Empty empty_srv;
-    shoot_client = nh.serviceClient<std_srvs::Empty>("close");
-    
-    MoveBaseClient ac("move_base", true);
 
+    shoot_close_client = nh.serviceClient<std_srvs::Empty>("/close");
+    MoveBaseClient ac("move_base", true);
     ac.waitForServer();
 
-    Move2goal(ac, 2.44, 0.76, 0.7);//G
-    shoot_client.call(empty_srv);
-    Move2goal(ac, 2.42, -0.006, -0.86);//H
-    shoot_client.call(empty_srv);
-    Move2goal(ac, 1.63, 0.017, -2.36);//I
-    shoot_client.call(empty_srv);
-    Move2goal(ac, 1.67, 2.39, 2.31);//D
-    shoot_client.call(empty_srv);
-    Move2goal(ac, 2.48, 2.33, 0.84);//E
-    shoot_client.call(empty_srv);
-    Move2goal(ac, 2.41, 1.48, -0.498);//F
-    shoot_client.call(empty_srv);
-    Move2goal(ac, 0.14, 1.58, -2.31);//A
-    shoot_client.call(empty_srv);
-    Move2goal(ac, 0.19, 2.47, 2.64);//B
-    shoot_client.call(empty_srv);
-    Move2goal(ac, 1.00, 2.39, 0.94);//C
-    shoot_client.call(empty_srv);
+    int count = 0;
+    ros::Rate loop_rate(10);
+    shoot_close_client.call(empty_srv);
+
+    Move1goal(ac, 1.5, 1.1,0);
+    sleep(0.5);
     
-    move_base_msgs::MoveBaseGoal goal3;
-    goal3.target_pose.pose.position.x = 0.0;
-    goal3.target_pose.pose.position.y = 0.0;
-    goal3.target_pose.pose.orientation.z = 0.0;
-    goal3.target_pose.pose.orientation.w = 1.0;
-    goal3.target_pose.header.frame_id = "map";
-    goal3.target_pose.header.stamp = ros::Time::now();
-    ac.sendGoal(goal3);
-    ROS_INFO("Send Goal Home !!!");
-    ac.waitForResult();
-    if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-    {
-        ROS_INFO("Back !!!!");
-    }
-    else
-    {
-        ROS_WARN("The Goal Planning Failed for some reason");
-    }
+     // First target point G
+    Move2goal(ac, 2.44, 0.76, 0.785, "1");
+
+    //Move1goal(ac, 0.877, 0.3, 1.57);
+
+    // //Second target point H  
+    Move2goal(ac, 2.44, -0.01, -0.785, "1");
+
+    // //Third target point I
+    Move2goal(ac, 1.63, 0.01, -2.355, "1");
+
+    // vel_msg.linear.x = -0.05;
+    // count = 0;
+    // while (ros::ok() && count < 20)
+    // {
+    //     pub.publish(vel_msg);
+    //     loop_rate.sleep();
+    //     count++;
+    // }
+    // // Stop
+    // vel_msg.linear.x = 0.0;
+    // pub.publish(vel_msg);
+
+    // Fourth target point   D
+    Move2goal(ac, 1.67, 2.39, 2.355, "1");
+    //Move1goal(ac, 1.100, 0.400, 0);
+
+    // Fifth target point E
+    Move2goal(ac, 2.48, 2.36, 0.785, "1");
+
+    // Sixth target point F
+    Move2goal(ac, 2.46, 1.45, -0.785, "1");
+
+    // vel_msg.linear.x = -0.05;
+    // count = 0;
+    // while (ros::ok() && count < 10)
+    // {
+    //     pub.publish(vel_msg);
+    //     loop_rate.sleep();
+    //     count++;
+    // }
+    // // Stop
+    // vel_msg.linear.x = 0.0;
+    // pub.publish(vel_msg);
+
+    // Seventh target point A
+    Move2goal(ac, 0.12, 1.58, -2.355, "1");
+
+    // Eighth target point B
+    Move2goal(ac, 0.14, 2.47, 2.355, "1");
+
+    // nineth target point C
+    Move2goal(ac, 0.94, 2.39, 0.785, "3");
+    // vel_msg.linear.x = -0.05;
+    // count = 0;
+    // while (ros::ok() && count < 10)
+    // {
+    //     pub.publish(vel_msg);
+    //     loop_rate.sleep();
+    //     count++;
+    // }
+    // // Stop
+    // vel_msg.linear.x = 0.0;
+    // pub.publish(vel_msg);
+
+    Move2goal(ac, 0, 0, 0, "3");
 
     return 0;
-
 }
