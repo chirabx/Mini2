@@ -16,9 +16,9 @@ private:
 
     // 保留初始代码特有的控制参数
     const double Kp = 5;                    // 比例系数
-    const double target_x_tolerance = 0.01;    // X轴位置容忍误差
+    const double target_x_tolerance = 0.03;    // X轴位置容忍误差
     const double z_target_distance = 0.145;
-    const double target_z_tolerance = 0.02;
+    const double target_z_tolerance = 0.04;
 
     bool should_exit_ = false;
 
