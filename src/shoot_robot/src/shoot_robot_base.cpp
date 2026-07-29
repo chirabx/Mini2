@@ -65,41 +65,41 @@ void Move_safe(ros::Publisher &pub, double linear_x, double linear_y, double dis
     pub.publish(vel_msg);
 }
 
-void SwingAndShoot()
-{
-    ros::NodeHandle nh;
-    geometry_msgs::Twist vel_msg;
-    ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
+// void SwingAndShoot()
+// {
+//     ros::NodeHandle nh;
+//     geometry_msgs::Twist vel_msg;
+//     ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
     
-    // 【修改】移除这里的激光开启和关闭逻辑，因为激光现在是常开的
-    ros::Rate loop_rate(10);
+//     // 【修改】移除这里的激光开启和关闭逻辑，因为激光现在是常开的
+//     ros::Rate loop_rate(10);
     
-    ROS_INFO("Starting swing...");
-    // 参数
-    const double swing_speed = 0.20;      // 角速度 rad/s
-    const double swing_angle = 0.3491;   // 20度 = π/6 弧度
-    const int one_way_steps = (int)(swing_angle / swing_speed / 0.1);  // 约10步
-    // 左摆20度
-    vel_msg.angular.z = swing_speed;
-    for (int i = 0; i < one_way_steps && ros::ok(); i++)
-    {
-        pub.publish(vel_msg);
-        loop_rate.sleep();
-    }
-    // 右摆40度（从左20度 → 右20度）
-    vel_msg.angular.z = -swing_speed;
-    for (int i = 0; i < one_way_steps * 2 && ros::ok(); i++)
-    {
-        pub.publish(vel_msg);
-        loop_rate.sleep();
-    }
+//     ROS_INFO("Starting swing...");
+//     // 参数
+//     const double swing_speed = 0.20;      // 角速度 rad/s
+//     const double swing_angle = 0.3491;   // 20度 = π/6 弧度
+//     const int one_way_steps = (int)(swing_angle / swing_speed / 0.1);  // 约10步
+//     // 左摆20度
+//     vel_msg.angular.z = swing_speed;
+//     for (int i = 0; i < one_way_steps && ros::ok(); i++)
+//     {
+//         pub.publish(vel_msg);
+//         loop_rate.sleep();
+//     }
+//     // 右摆40度（从左20度 → 右20度）
+//     vel_msg.angular.z = -swing_speed;
+//     for (int i = 0; i < one_way_steps * 2 && ros::ok(); i++)
+//     {
+//         pub.publish(vel_msg);
+//         loop_rate.sleep();
+//     }
     
-    // 停止
-    vel_msg.angular.z = 0;
-    pub.publish(vel_msg);
+//     // 停止
+//     vel_msg.angular.z = 0;
+//     pub.publish(vel_msg);
     
-    ROS_INFO("Swing complete.");
-}
+//     ROS_INFO("Swing complete.");
+// }
 
 void Move2goal(MoveBaseClient &ac, double x, double y, double yaw, string tag_name)
 {
@@ -122,7 +122,7 @@ void Move2goal(MoveBaseClient &ac, double x, double y, double yaw, string tag_na
     {
     case actionlib::SimpleClientGoalState::SUCCEEDED:
         ROS_INFO("Target point %s (%.3f, %.3f, %.3f) reached successfully!", tag_name.c_str(), x, y, yaw);
-        SwingAndShoot();
+        // SwingAndShoot();
         break;
 
     case actionlib::SimpleClientGoalState::ABORTED:
@@ -174,35 +174,44 @@ int main(int argc, char **argv)
     
     Move_safe(pub,0.0,0.4,25);
     Move_safe(pub,0.4,0.0,25);
-    Move1goal(ac, 1.50, 1.1, 0);
+    Move_safe(pub,0.0,0.4,15);
     sleep(0.5);
 
     // First target point
     Move2goal(ac, 2.47, 0.79, 0.785, "1");
+    sleep(0.5);
 
     // Second target point
     Move2goal(ac, 2.47, -0.04, -0.785, "1");
+    sleep(0.5);
 
     // Third target point
     Move2goal(ac, 1.63, 0.01, -2.355, "1");
+    sleep(0.5);
 
     // Fourth target point
     Move2goal(ac, 1.68, 2.50, 2.355, "1");
+    sleep(0.5);
 
     // Fifth target point
     Move2goal(ac, 2.50, 2.41, 0.785, "1");
+    sleep(0.5);
 
     // Sixth target point
     Move2goal(ac, 2.48, 1.47, -0.785, "1");
+    sleep(0.5);
 
     // Seventh target point
     Move2goal(ac, 0.11, 1.75, -2.355, "1");
+    sleep(0.5);
 
     // Eighth target point
     Move2goal(ac, 0.14, 2.47, 2.355, "1");
+    sleep(0.5);
 
     // nineth target point
     Move2goal(ac, 0.94, 2.50, 0.785, "1");
+    sleep(0.5);
 
     // 返回原点过程
     Move1goal(ac, 0.55, 0.75, 0);
