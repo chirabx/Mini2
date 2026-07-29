@@ -81,7 +81,7 @@ void SwingAndShoot()
     shoot_client.call(empty_srv);
     ROS_INFO("Laser ON, starting swing...");
     // 参数
-    const double swing_speed = 0.25;      // 角速度 rad/s
+    const double swing_speed = 0.20;      // 角速度 rad/s
     const double swing_angle = 0.3491;   // 20度 = π/6 弧度
     const int one_way_steps = (int)(swing_angle / swing_speed / 0.1);  // 约10步
     // 左摆20度
@@ -98,13 +98,13 @@ void SwingAndShoot()
         pub.publish(vel_msg);
         loop_rate.sleep();
     }
-    // 回正30度（从右20度 → 中心）
-    vel_msg.angular.z = swing_speed;
-    for (int i = 0; i < one_way_steps && ros::ok(); i++)
-    {
-        pub.publish(vel_msg);
-        loop_rate.sleep();
-    }
+    // // 回正30度（从右20度 → 中心）
+    // vel_msg.angular.z = swing_speed;
+    // for (int i = 0; i < one_way_steps && ros::ok(); i++)
+    // {
+    //     pub.publish(vel_msg);
+    //     loop_rate.sleep();
+    // }
     // 停止
     vel_msg.angular.z = 0;
     pub.publish(vel_msg);
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
     // shoot_close_client.call(empty_srv);
 
     // Fourth target point
-    Move2goal(ac, 1.65, 2.41, 2.355, "1");
+    Move2goal(ac, 1.68, 2.50, 2.355, "1");
     // shoot_close_client.call(empty_srv);
 
     // vel_msg.linear.x = -0.05;
@@ -250,7 +250,7 @@ int main(int argc, char **argv)
     // shoot_close_client.call(empty_srv);
 
     // Seventh target point
-    Move2goal(ac, 0.11, 1.55, -2.355, "1");
+    Move2goal(ac, 0.11, 1.75, -2.355, "1");
     // shoot_close_client.call(empty_srv);
 
     // vel_msg.linear.x = -0.05;
@@ -275,8 +275,8 @@ int main(int argc, char **argv)
 
     Move1goal(ac, 0.55, 0.75, 0);
     sleep(0.5);
-    Move2goal(ac, 0.05, 0.05, 0,"1");
+    Move1goal(ac, 0.05, 0.05, 0);
     Move_safe(pub,0.0,-0.2,15);
-
+    Move_safe(pub,-0.2,0.0,15);
     return 0;
 }
