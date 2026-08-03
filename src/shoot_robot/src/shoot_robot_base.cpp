@@ -28,7 +28,7 @@ void performRetryLogic(MoveBaseClient &ac, ros::Publisher &pub, double x, double
     ros::Rate loop_rate(10);
 
     ROS_INFO("Executing backward retry logic...");
-    vel_msg.linear.x = -0.05;
+    vel_msg.linear.x = -0.1;
     count = 0;
     while (ros::ok() && count < 10)
     {
@@ -201,7 +201,7 @@ int main(int argc, char **argv)
     // shoot_close_client.call(empty_srv);
 
     // Fourth target point
-    Move2goal(ac, pub,1.73, 2.55, 2.355, "1");
+    Move2goal(ac, pub,1.73, 2.45, 2.355, "1");
     // shoot_close_client.call(empty_srv);
 
     // vel_msg.linear.x = -0.05;
@@ -238,7 +238,7 @@ int main(int argc, char **argv)
     Move2goal(ac, pub,2.48, 1.47, -0.785, "1");
     // shoot_close_client.call(empty_srv);
 
-    // Move1goal(ac,1.40,1.40,-3.14);
+    Move1goal(ac,1.30,1.20,-3.14);
 
     // Seventh target point
     Move2goal(ac, pub,0.11, 1.75, -2.355, "1");
@@ -261,7 +261,7 @@ int main(int argc, char **argv)
     // shoot_close_client.call(empty_srv);
 
     // nineth target point
-    Move2goal(ac, pub,0.97, 2.55, 0.785, "1");
+    Move2goal(ac, pub,0.97, 2.45, 0.785, "1");
     // shoot_close_client.call(empty_srv);
 
     // Move1goal(ac, 0.55, 0.75, 0);
