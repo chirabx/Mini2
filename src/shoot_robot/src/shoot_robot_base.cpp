@@ -175,13 +175,15 @@ int main(int argc, char **argv)
     sleep(0.5);
 
     // First target point G
-    Move2goal(ac, pub,2.47, 0.79, 0.785, "1");
+    //Move2goal(ac, pub,2.47, 0.79, 0.785, "1");
+    Move2goal(ac, pub,2.48, 1.47, -0.785, "1");
     // shoot_close_client.call(empty_srv);
 
     //Move1goal(ac, 0.877, 0.3, 1.57);
 
     // //Second target point H
-    Move2goal(ac, pub,2.47, -0.04, -0.785, "1");
+    //Move2goal(ac, pub,2.47, -0.04, -0.785, "1");
+    Move2goal(ac, pub,2.60, 2.41, 0.785, "1");
     // shoot_close_client.call(empty_srv);
 
     // vel_msg.linear.x = -0.05;
@@ -197,11 +199,13 @@ int main(int argc, char **argv)
     // pub.publish(vel_msg);
 
     // //Third target point I
-    Move2goal(ac, pub,1.63, 0.01, -2.355, "1");
+    //Move2goal(ac, pub,1.63, 0.01, -2.355, "1");
+    Move2goal(ac, pub,1.73, 2.45, 2.355, "1");
     // shoot_close_client.call(empty_srv);
 
     // Fourth target point
-    Move2goal(ac, pub,1.73, 2.45, 2.355, "1");
+    //Move2goal(ac, pub,1.73, 2.45, 2.355, "1");
+    Move2goal(ac, pub,2.47, 0.79, 0.785, "1");
     // shoot_close_client.call(empty_srv);
 
     // vel_msg.linear.x = -0.05;
@@ -219,7 +223,8 @@ int main(int argc, char **argv)
     // Move1goal(ac, 1.100, 0.400, 0);
 
     // Fifth target point
-    Move2goal(ac, pub,2.60, 2.41, 0.785, "1");//(2.5,2.41,0.785)
+    //Move2goal(ac, pub,2.60, 2.41, 0.785, "1");//(2.5,2.41,0.785)
+    Move2goal(ac, pub,2.47, -0.04, -0.785, "1");
     // shoot_close_client.call(empty_srv);
 
     // vel_msg.linear.x = -0.05;
@@ -235,13 +240,14 @@ int main(int argc, char **argv)
     // pub.publish(vel_msg);
 
     // Sixth target point
-    Move2goal(ac, pub,2.48, 1.47, -0.785, "1");
+    //Move2goal(ac, pub,2.48, 1.47, -0.785, "1");
+    Move2goal(ac, pub,1.63, 0.01, -2.355, "1");
     // shoot_close_client.call(empty_srv);
 
     Move1goal(ac,1.30,1.20,-3.14);
 
     // Seventh target point
-    Move2goal(ac, pub,0.11, 1.75, -2.355, "1");
+    Move2goal(ac, pub,0.11, 1.80, -2.355, "1");
     // shoot_close_client.call(empty_srv);
 
     // vel_msg.linear.x = -0.05;
@@ -257,7 +263,7 @@ int main(int argc, char **argv)
     // pub.publish(vel_msg);
 
     // Eighth target point
-    Move2goal(ac, pub,0.14, 2.47, 2.355, "1");
+    Move2goal(ac, pub,0.14, 2.50, 2.355, "1");
     // shoot_close_client.call(empty_srv);
 
     // nineth target point
@@ -266,7 +272,7 @@ int main(int argc, char **argv)
 
     // Move1goal(ac, 0.55, 0.75, 0);
     // sleep(0.5);
-    Move1goal(ac, 0.1, 0.1, 0);//(0.05,0.05,0)
+    Move1goal(ac, 0.15, 0.15, 0);//(0.05,0.05,0)
     // Move_safe(pub,0.0,-0.4,15);
     // Move_safe(pub,-0.4,0.0,15);
     // 【修改】完成所有动作，返回起始点后，关闭激光
