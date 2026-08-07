@@ -71,7 +71,7 @@ void SwingAndShoot(ros ::Publisher &pub)
     ROS_INFO("Laser ON, starting swing...");
     // 参数
     const double swing_speed = 0.27;      // 角速度 rad/s
-    const double swing_angle = 0.349;   // 20度 = π/6 弧度
+    const double swing_angle = 0.262;   // 15度 = π/12 弧度
     const int one_way_steps = (int)(swing_angle / swing_speed / 0.1);  // 约10步
     // 左摆30度
     vel_msg.angular.z = swing_speed;
@@ -170,19 +170,19 @@ int main(int argc, char **argv)
     ROS_INFO("Laser ON (Always on until return)");
     
     Move_safe(pub,0.0,0.4,25);
-    Move_safe(pub,0.4,0.0,25);
-    Move_safe(pub,0.0,0.4,20);
-    sleep(0.5);
+    // Move_safe(pub,0.4,0.0,25);
+    // Move_safe(pub,0.0,0.4,20);
+    // sleep(0.5);
 
     // First target point G
-    Move2goal(ac, pub,2.47, 0.79, 0.785, "1");
+    Move2goal(ac, pub,2.54, 0.79, 0.785, "1");
     //Move2goal(ac, pub,2.58, 1.57, -0.785, "1");
     // shoot_close_client.call(empty_srv);
 
     //Move1goal(ac, 0.877, 0.3, 1.57);
 
     // //Second target point H
-    Move2goal(ac, pub,2.45, -0.00, -0.785, "1");
+    Move2goal(ac, pub,2.34, -0.005, -0.785, "1");
     //Move2goal(ac, pub,2.60, 2.40, 0.785, "1");
     // shoot_close_client.call(empty_srv);
 
@@ -199,12 +199,12 @@ int main(int argc, char **argv)
     // pub.publish(vel_msg);
 
     // //Third target point I
-    Move2goal(ac, pub,1.63, 0.06, -2.355, "1");
+    Move2goal(ac, pub,1.585, 0.105, -2.355, "1");
     //Move2goal(ac, pub,1.73, 2.48, 2.355, "1");
     // shoot_close_client.call(empty_srv);
 
     // Fourth target point
-    Move2goal(ac, pub,1.73, 2.45, 2.355, "1");
+    Move2goal(ac, pub,1.70, 2.48, 2.355, "1");
     //Move2goal(ac, pub,2.50, 0.75, 0.785, "1");
     // shoot_close_client.call(empty_srv);
 
@@ -223,31 +223,31 @@ int main(int argc, char **argv)
     // Move1goal(ac, 1.100, 0.400, 0);
 
     // Fifth target point
-    Move2goal(ac, pub,2.60, 2.45, 0.785, "1");//(2.5,2.41,0.785)
+    Move2goal(ac, pub,2.59, 2.40, 0.785, "1");//(2.5,2.41,0.785)
     //Move2goal(ac, pub,2.47, -0.00, -0.785, "1");
     // shoot_close_client.call(empty_srv);
 
-    vel_msg.linear.x = 0.10;
-    count = 0;
-    while (ros::ok() && count < 20)
-    {
-         pub.publish(vel_msg);
-         loop_rate.sleep();
-         count++;
-    }
-    // Stop
-    vel_msg.linear.x = 0.0;
-    pub.publish(vel_msg);
+    // vel_msg.linear.x = -0.20;
+    // count = 0;
+    // while (ros::ok() && count < 15)
+    // {
+    //      pub.publish(vel_msg);
+    //      loop_rate.sleep();
+    //      count++;
+    // }
+    // // Stop
+    // vel_msg.linear.x = 0.0;
+    // pub.publish(vel_msg);
 
     // Sixth target point
-    Move2goal(ac, pub,2.45, 1.47, -0.785, "1");
+    Move2goal(ac, pub,2.38, 1.52, -0.785, "1");
     //Move2goal(ac, pub,1.63, 0.01, -2.355, "1");
     // shoot_close_client.call(empty_srv);
 
     //Move1goal(ac,1.30,1.20,-3.14);
 
     // Seventh target point
-    Move2goal(ac, pub,0.11, 1.80, -2.355, "1");
+    Move2goal(ac, pub,0.020, 1.80, -2.355, "1");
     // shoot_close_client.call(empty_srv);
 
     // vel_msg.linear.x = 0.05;
@@ -263,25 +263,25 @@ int main(int argc, char **argv)
     // pub.publish(vel_msg);
 
     // Eighth target point
-    Move2goal(ac, pub,0.15, 2.50, 2.355, "1");//x0.12 y2.50
+    Move2goal(ac, pub,0.06, 2.42, 2.355, "1");//x0.12 y2.50
     // shoot_close_client.call(empty_srv); 
-    vel_msg.linear.x = 0.10;
-    count = 0;
-    while (ros::ok() && count < 20)
-    {
-        pub.publish(vel_msg);
-        loop_rate.sleep();
-        count++;
-    }
-    // Stop
-    vel_msg.linear.x = 0.0;
-    pub.publish(vel_msg);
+    // vel_msg.linear.x = -0.20;
+    // count = 0;
+    // while (ros::ok() && count < 15)
+    // {
+    //     pub.publish(vel_msg);
+    //     loop_rate.sleep();
+    //     count++;
+    // }
+    // // Stop
+    // vel_msg.linear.x = 0.0;
+    // pub.publish(vel_msg);
 
     // nineth target point
-    Move2goal(ac, pub,0.97, 2.45, 0.785, "1");
+    Move2goal(ac, pub,1, 2.45, 0.785, "1");
     // shoot_close_client.call(empty_srv);
 
-    Move1goal(ac, 0.60, 0.75, 0.00);//x0.55
+   // Move1goal(ac, 0.60, 0.75, -1.57);//x0.55
     // sleep(0.5);
     Move1goal(ac, 0.2, 0.2, 0);//(0.05,0.05,0)
     // Move_safe(pub,0.0,-0.4,15);
