@@ -11,27 +11,26 @@ using namespace std;
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 // Function declarations
-void Move2goal(MoveBaseClient &ac, double x, double y, double yaw, string tag_name);
+void Move2goal(MoveBaseClient &ac, ros::Publisher &pub,double x, double y, double yaw, string tag_name);
 void Move1goal(MoveBaseClient &ac, double x, double y, double yaw);
-void performRetryLogic(MoveBaseClient &ac, double x, double y, double yaw, const std::string &tag_name);
+void performRetryLogic(MoveBaseClient &ac, ros::Publisher &pub, double x, double y, double yaw, const std::string &tag_name);
 void sleep(double second)
 {
     ros::Duration(second).sleep();
 }
 
 // Retry logic function
-void performRetryLogic(MoveBaseClient &ac, double x, double y, double yaw, const std::string &tag_name)
+void performRetryLogic(MoveBaseClient &ac, ros::Publisher &pub, double x, double y, double yaw, const std::string &tag_name)
 {
     ros::NodeHandle nh;
     geometry_msgs::Twist vel_msg;
-    ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
     int count = 0;
     ros::Rate loop_rate(10);
 
     ROS_INFO("Executing backward retry logic...");
-    vel_msg.linear.x = -0.05;
+    vel_msg.linear.x = -0.2;//0.05
     count = 0;
-    while (ros::ok() && count < 10)
+    while (ros::ok() && count < 15)
     {
         pub.publish(vel_msg);
         loop_rate.sleep();
@@ -42,7 +41,7 @@ void performRetryLogic(MoveBaseClient &ac, double x, double y, double yaw, const
     pub.publish(vel_msg);
 
     ROS_INFO("Retrying to move to target point (%.3f, %.3f, %.3f)", x, y, yaw);
-    Move2goal(ac, x, y, yaw, tag_name);
+    Move2goal(ac, pub, x, y, yaw, tag_name);
 }
 
 void Move_safe(ros::Publisher &pub, double linear_x, double linear_y, double distance)
@@ -65,43 +64,8 @@ void Move_safe(ros::Publisher &pub, double linear_x, double linear_y, double dis
     pub.publish(vel_msg);
 }
 
-// void SwingAndShoot()
-// {
-//     ros::NodeHandle nh;
-//     geometry_msgs::Twist vel_msg;
-//     ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
-    
-//     // 【修改】移除这里的激光开启和关闭逻辑，因为激光现在是常开的
-//     ros::Rate loop_rate(10);
-    
-//     ROS_INFO("Starting swing...");
-//     // 参数
-//     const double swing_speed = 0.20;      // 角速度 rad/s
-//     const double swing_angle = 0.3491;   // 20度 = π/6 弧度
-//     const int one_way_steps = (int)(swing_angle / swing_speed / 0.1);  // 约10步
-//     // 左摆20度
-//     vel_msg.angular.z = swing_speed;
-//     for (int i = 0; i < one_way_steps && ros::ok(); i++)
-//     {
-//         pub.publish(vel_msg);
-//         loop_rate.sleep();
-//     }
-//     // 右摆40度（从左20度 → 右20度）
-//     vel_msg.angular.z = -swing_speed;
-//     for (int i = 0; i < one_way_steps * 2 && ros::ok(); i++)
-//     {
-//         pub.publish(vel_msg);
-//         loop_rate.sleep();
-//     }
-    
-//     // 停止
-//     vel_msg.angular.z = 0;
-//     pub.publish(vel_msg);
-    
-//     ROS_INFO("Swing complete.");
-// }
 
-void Move2goal(MoveBaseClient &ac, double x, double y, double yaw, string tag_name)
+void Move2goal(MoveBaseClient &ac, ros ::Publisher &pub,double x, double y, double yaw, string tag_name)
 {
     tf2::Quaternion quaternion;
     quaternion.setRPY(0, 0, yaw);
@@ -122,14 +86,15 @@ void Move2goal(MoveBaseClient &ac, double x, double y, double yaw, string tag_na
     {
     case actionlib::SimpleClientGoalState::SUCCEEDED:
         ROS_INFO("Target point %s (%.3f, %.3f, %.3f) reached successfully!", tag_name.c_str(), x, y, yaw);
-        // SwingAndShoot();
+        system(("roslaunch shoot_robot shoot_tag_" + tag_name + ".launch").c_str());
         break;
 
     case actionlib::SimpleClientGoalState::ABORTED:
         ROS_WARN("Navigation aborted - possibly due to obstacles or path planning failure");
-        performRetryLogic(ac, x, y, yaw, tag_name);
+        performRetryLogic(ac, pub, x, y, yaw, tag_name);
         break;
     }
+    // sleep(0.5);
 }
 
 void Move1goal(MoveBaseClient &ac, double x, double y, double yaw)
@@ -146,6 +111,7 @@ void Move1goal(MoveBaseClient &ac, double x, double y, double yaw)
     ac.sendGoal(goal);
     ROS_INFO("MoveBase Send Goal !!!");
     ac.waitForResult();
+    // sleep(0.5);
 }
 
 int main(int argc, char **argv)
@@ -155,75 +121,58 @@ int main(int argc, char **argv)
 
     geometry_msgs::Twist vel_msg;
     ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
-    
-    // 【修改】同时声明开启和关闭激光的服务客户端
-    ros::ServiceClient shoot_close_client = nh.serviceClient<std_srvs::Empty>("/close");
-    ros::ServiceClient shoot_open_client = nh.serviceClient<std_srvs::Empty>("/shoot");
+    ros::ServiceClient shoot_close_client;
     std_srvs::Empty empty_srv;
 
+    shoot_close_client = nh.serviceClient<std_srvs::Empty>("/close");
     MoveBaseClient ac("move_base", true);
     ac.waitForServer();
 
     int count = 0;
     ros::Rate loop_rate(10);
-    
-    // 【修改】程序开始时，常开激光
-    ros::service::waitForService("/shoot");
-    shoot_open_client.call(empty_srv);
-    ROS_INFO("Laser ON (Always on until return)");
-    
+    shoot_close_client.call(empty_srv);
+
     Move_safe(pub,0.0,0.4,25);
-    Move_safe(pub,0.4,0.0,25);
-    Move_safe(pub,0.0,0.4,15);
-    sleep(0.5);
+    
+    // First target point G
+    Move2goal(ac, pub,2.54, 0.79, 0.785, "1");
+    shoot_close_client.call(empty_srv);
 
-    // First target point
-    Move2goal(ac, 2.47, 0.79, 0.785, "1");
-    sleep(0.5);
+    // //Second target point H
+    Move2goal(ac, pub,2.34, -0.005, -0.785, "1");
+    shoot_close_client.call(empty_srv);
 
-    // Second target point
-    Move2goal(ac, 2.47, -0.04, -0.785, "1");
-    sleep(0.5);
-
-    // Third target point
-    Move2goal(ac, 1.63, 0.01, -2.355, "1");
-    sleep(0.5);
+    // //Third target point I
+    Move2goal(ac, pub,1.585, 0.105, -2.355, "1");
+    shoot_close_client.call(empty_srv);
 
     // Fourth target point
-    Move2goal(ac, 1.68, 2.50, 2.355, "1");
-    sleep(0.5);
+    Move2goal(ac, pub,1.70, 2.48, 2.355, "1");
+    shoot_close_client.call(empty_srv);
 
     // Fifth target point
-    Move2goal(ac, 2.50, 2.41, 0.785, "1");
-    sleep(0.5);
+    Move2goal(ac, pub,2.59, 2.40, 0.785, "1");//(2.5,2.41,0.785)
+    shoot_close_client.call(empty_srv);
 
     // Sixth target point
-    Move2goal(ac, 2.48, 1.47, -0.785, "1");
-    sleep(0.5);
+    Move2goal(ac, pub,2.38, 1.52, -0.785, "1");
+    shoot_close_client.call(empty_srv);
 
     // Seventh target point
-    Move2goal(ac, 0.11, 1.75, -2.355, "1");
-    sleep(0.5);
+    Move2goal(ac, pub,0.020, 1.80, -2.355, "1");
+    shoot_close_client.call(empty_srv);
 
     // Eighth target point
-    Move2goal(ac, 0.14, 2.47, 2.355, "1");
-    sleep(0.5);
+    Move2goal(ac, pub,0.06, 2.42, 2.355, "1");//x0.12 y2.50
+    shoot_close_client.call(empty_srv); 
 
     // nineth target point
-    Move2goal(ac, 0.94, 2.50, 0.785, "1");
-    sleep(0.5);
-
-    // 返回原点过程
-    Move1goal(ac, 0.55, 0.75, 0);
-    sleep(0.5);
-    Move1goal(ac, 0.05, 0.05, 0);
-    Move_safe(pub,0.0,-0.2,15);
-    Move_safe(pub,-0.2,0.0,15);
-    
-    // 【修改】完成所有动作，返回起始点后，关闭激光
-    ros::service::waitForService("/close");
+    Move2goal(ac, pub,1, 2.45, 0.785, "1");
     shoot_close_client.call(empty_srv);
-    ROS_INFO("Returned to start. Laser OFF.");
 
+    Move1goal(ac, 0.2, 0.2, 0);//(0.05,0.05,0)
+    // Move_safe(pub,0.0,-0.4,15);
+    // Move_safe(pub,-0.4,0.0,15);
+    
     return 0;
 }
