@@ -169,22 +169,16 @@ int main(int argc, char **argv)
     shoot_open_client.call(empty_srv);
     ROS_INFO("Laser ON (Always on until return)");
     
-    Move_safe(pub,0.0,0.4,25);
+    // Move_safe(pub,0.0,0.4,30);
     // Move_safe(pub,0.4,0.0,25);
     // Move_safe(pub,0.0,0.4,20);
     // sleep(0.5);
 
     // First target point G
     Move2goal(ac, pub,2.54, 0.79, 0.785, "1");
-    //Move2goal(ac, pub,2.58, 1.57, -0.785, "1");
-    // shoot_close_client.call(empty_srv);
-
-    //Move1goal(ac, 0.877, 0.3, 1.57);
-
+    
     // //Second target point H
     Move2goal(ac, pub,2.34, -0.005, -0.785, "1");
-    //Move2goal(ac, pub,2.60, 2.40, 0.785, "1");
-    // shoot_close_client.call(empty_srv);
 
     // vel_msg.linear.x = -0.05;
     // count = 0;
@@ -200,90 +194,28 @@ int main(int argc, char **argv)
 
     // //Third target point I
     Move2goal(ac, pub,1.585, 0.105, -2.355, "1");
-    //Move2goal(ac, pub,1.73, 2.48, 2.355, "1");
-    // shoot_close_client.call(empty_srv);
-
+    
     // Fourth target point
     Move2goal(ac, pub,1.70, 2.48, 2.355, "1");
-    //Move2goal(ac, pub,2.50, 0.75, 0.785, "1");
-    // shoot_close_client.call(empty_srv);
-
-    // vel_msg.linear.x = 0.05;
-    // count = 0;
-    // while (ros::ok() && count < 10)
-    // {
-    //     pub.publish(vel_msg);
-    //     loop_rate.sleep();
-    //     count++;
-    // }
-    // // Stop
-    // vel_msg.linear.x = 0.0;
-    // pub.publish(vel_msg);
-
-    // Move1goal(ac, 1.100, 0.400, 0);
-
+    
     // Fifth target point
     Move2goal(ac, pub,2.59, 2.40, 0.785, "1");//(2.5,2.41,0.785)
-    //Move2goal(ac, pub,2.47, -0.00, -0.785, "1");
-    // shoot_close_client.call(empty_srv);
-
-    // vel_msg.linear.x = -0.20;
-    // count = 0;
-    // while (ros::ok() && count < 15)
-    // {
-    //      pub.publish(vel_msg);
-    //      loop_rate.sleep();
-    //      count++;
-    // }
-    // // Stop
-    // vel_msg.linear.x = 0.0;
-    // pub.publish(vel_msg);
-
+    
     // Sixth target point
-    Move2goal(ac, pub,2.38, 1.52, -0.785, "1");
-    //Move2goal(ac, pub,1.63, 0.01, -2.355, "1");
-    // shoot_close_client.call(empty_srv);
-
-    //Move1goal(ac,1.30,1.20,-3.14);
-
+    Move2goal(ac, pub,2.38, 1.46, -0.785, "1");
+    
+    Move1goal(ac,1.40,1.40,-3.14);
+    sleep(0.5);
     // Seventh target point
-    Move2goal(ac, pub,0.020, 1.80, -2.355, "1");
-    // shoot_close_client.call(empty_srv);
-
-    // vel_msg.linear.x = 0.05;
-    // count = 0;
-    // while (ros::ok() && count < 30)
-    // {
-    //     pub.publish(vel_msg);
-    //     loop_rate.sleep();
-    //     count++;
-    // }
-    // // Stop
-    // vel_msg.linear.x = 0.0;
-    // pub.publish(vel_msg);
+    Move2goal(ac, pub,0.06, 1.77, -2.355, "1");
 
     // Eighth target point
-    Move2goal(ac, pub,0.06, 2.42, 2.355, "1");//x0.12 y2.50
-    // shoot_close_client.call(empty_srv); 
-    // vel_msg.linear.x = -0.20;
-    // count = 0;
-    // while (ros::ok() && count < 15)
-    // {
-    //     pub.publish(vel_msg);
-    //     loop_rate.sleep();
-    //     count++;
-    // }
-    // // Stop
-    // vel_msg.linear.x = 0.0;
-    // pub.publish(vel_msg);
-
+    Move2goal(ac, pub,0.08, 2.43, 2.355, "1");//x0.12 y2.50
+    
     // nineth target point
-    Move2goal(ac, pub,1, 2.45, 0.785, "1");
-    // shoot_close_client.call(empty_srv);
-
-   // Move1goal(ac, 0.60, 0.75, -1.57);//x0.55
-    // sleep(0.5);
-    Move1goal(ac, 0.2, 0.2, 0);//(0.05,0.05,0)
+    Move2goal(ac, pub,0.98, 2.36, 0.785, "1");
+    
+    Move1goal(ac, 0.1, 0.1, 0);//(0.05,0.05,0)
     // Move_safe(pub,0.0,-0.4,15);
     // Move_safe(pub,-0.4,0.0,15);
     // 【修改】完成所有动作，返回起始点后，关闭激光
