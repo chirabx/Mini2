@@ -70,8 +70,8 @@ void SwingAndShoot(ros ::Publisher &pub)
     ros::Rate loop_rate(10);
     ROS_INFO("Laser ON, starting swing...");
     // 参数
-    const double swing_speed = 0.18;      // 角速度 rad/s
-    const double swing_angle = 0.262;   // 15度 = π/12 弧度
+    const double swing_speed = 0.05;      // 角速度 rad/s
+    const double swing_angle = 0.174;   // 10度 = π/18 弧度
     const int one_way_steps = (int)(swing_angle / swing_speed / 0.1);  // 约10步
     // 左摆15度
     vel_msg.angular.z = swing_speed;
@@ -176,11 +176,11 @@ int main(int argc, char **argv)
 
     Move1goal(ac, 1.4, 1.2, 0);
 
-    // First target point G
-    Move2goal(ac, pub,2.54, 0.79, 0.785, "1");
-    
-    // //Second target point H
-    Move2goal(ac, pub,2.34, -0.005, -0.785, "1");
+ // First target point
+    Move2goal(ac, pub, 2.50, 0.80, 0.785, "1");
+
+    // Second target point
+    Move2goal(ac, pub, 2.35, -0.004, -0.785, "1");
 
     // vel_msg.linear.x = -0.05;
     // count = 0;
@@ -194,28 +194,29 @@ int main(int argc, char **argv)
     // vel_msg.linear.x = 0.0;
     // pub.publish(vel_msg);
 
-    // //Third target point I
-    Move2goal(ac, pub,1.585, 0.105, -2.355, "1");
-    
+   // Third target point
+    Move2goal(ac, pub, 1.584, 0.114, -2.355, "1");
+
     // Fourth target point
-    Move2goal(ac, pub,1.70, 2.49, 2.355, "1");
-    
+    Move2goal(ac, pub, 1.71, 2.47, 2.355, "1");
+
     // Fifth target point
-    Move2goal(ac, pub,2.59, 2.40, 0.785, "1");//(2.5,2.41,0.785)
-    
+    Move2goal(ac, pub, 2.51, 2.33, 0.785, "1");
+
     // Sixth target point
-    Move2goal(ac, pub,2.38, 1.46, -0.785, "1");
-    
-    Move1goal(ac,1.40,1.40,-3.14);
+    Move2goal(ac, pub, 2.38, 1.51, -0.785, "1");
+
+    Move1goal(ac, 1.40, 1.40, -3.14);
     sleep(0.5);
+
     // Seventh target point
-    Move2goal(ac, pub,0.03, 1.63, -2.355, "1");
+    Move2goal(ac, pub, 0.10, 1.60, -2.355, "1");
 
     // Eighth target point
-    Move2goal(ac, pub,0.13, 2.46, 2.355, "1");//x0.12 y2.50
-    
-    // nineth target point
-    Move2goal(ac, pub,0.98, 2.36, 0.785, "1");
+    Move2goal(ac, pub, 0.17, 2.45, 2.355, "1");
+
+    // Ninth target point
+    Move2goal(ac, pub, 0.93, 2.33, 0.785, "1");
 
     Move1goal(ac, 1.1, 1.0, -1.57);
     sleep(0.5);
