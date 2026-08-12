@@ -10,10 +10,14 @@
 using namespace std;
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
+
 // Function declarations
-void Move2goal(MoveBaseClient &ac, ros::Publisher &pub,double x, double y, double yaw, string tag_name);
+void Move2goal(MoveBaseClient &ac, ros::Publisher &pub, double x, double y, double yaw, string tag_name);
 void Move1goal(MoveBaseClient &ac, double x, double y, double yaw);
 void performRetryLogic(MoveBaseClient &ac, ros::Publisher &pub, double x, double y, double yaw, const std::string &tag_name);
+void Turn_safe_1(ros::Publisher &pub, double angular_z, double distance);
+void StepShoot(ros::Publisher &pub);
+
 void sleep(double second)
 {
     ros::Duration(second).sleep();
@@ -64,42 +68,57 @@ void Move_safe(ros::Publisher &pub, double linear_x, double linear_y, double dis
     pub.publish(vel_msg);
 }
 
-void SwingAndShoot(ros ::Publisher &pub)
+// 原地旋转一小段角度（你提供的函数）
+void Turn_safe_1(ros::Publisher &pub, double angular_z, double distance)
 {
     geometry_msgs::Twist vel_msg;
+    vel_msg.angular.z = angular_z;
+    int count = 0;
     ros::Rate loop_rate(10);
-    ROS_INFO("Laser ON, starting swing...");
-    // 参数
-    const double swing_speed = 0.05;      // 角速度 rad/s
-    const double swing_angle = 0.174;   // 10度 = π/18 弧度
-    const int one_way_steps = (int)(swing_angle / swing_speed / 0.1);  // 约10步
-    // 左摆15度
-    vel_msg.angular.z = swing_speed;
-    for (int i = 0; i < one_way_steps && ros::ok(); i++)
+    while (ros::ok() && count < distance)
     {
         pub.publish(vel_msg);
+        ros::spinOnce();
         loop_rate.sleep();
+        count++;
     }
-    // 右摆30度（从左20度 → 右20度）
-    vel_msg.angular.z = -swing_speed;
-    for (int i = 0; i < one_way_steps * 2 && ros::ok(); i++)
-    {
-        pub.publish(vel_msg);
-        loop_rate.sleep();
-    }
-    // // 回正30度（从右20度 → 中心）
-    // vel_msg.angular.z = swing_speed;
-    // for (int i = 0; i < one_way_steps && ros::ok(); i++)
-    // {
-    //     pub.publish(vel_msg);
-    //     loop_rate.sleep();
-    // }
-    //停止
-    vel_msg.angular.z = 0;
+    // 停下
+    vel_msg.angular.z = 0.0;
     pub.publish(vel_msg);
 }
 
-void Move2goal(MoveBaseClient &ac, ros ::Publisher &pub,double x, double y, double yaw, string tag_name)
+// 分步射击：旋转一小角度 -> 停顿（射击） -> 再旋转 -> 再停顿 ...
+// 分步射击：左转小角度 -> 停顿 -> 再左转 -> 停顿 ... 然后右转对应角度 -> 停顿 -> 再右转 -> 停顿 ...（回到起始朝向）
+void StepShoot(ros::Publisher &pub)
+{
+    ROS_INFO("Step shoot: rotate left, pause, repeat; then rotate right, pause, repeat...");
+    // ===== 参数可调 =====
+    const double turn_speed   = 0.18;    // 旋转角速度 rad/s（正值=左转，负值=右转）
+    const double step_angle   = 0.0875;  // 每次旋转角度（弧度），0.0875 rad ≈ 5°
+    const int    repeat_times = 5;       // 左、右各旋转-停顿循环次数
+    const double pause_sec    = 0.5;     // 每次停顿（射击）时间（秒）
+    // =====================
+    const int turn_steps = (int)(step_angle / turn_speed / 0.1);  // 每次旋转的控制步数（10Hz，每步0.1s）
+
+    // 向左分步旋转射击
+    ROS_INFO("Rotating LEFT...");
+    for (int i = 0; i < repeat_times && ros::ok(); i++)
+    {
+        Turn_safe_1(pub, turn_speed, turn_steps);   // 左转一小角度（正角速度 = 逆时针 = 左）
+        ros::Duration(pause_sec).sleep();           // 停顿，激光常开完成射击
+    }
+
+    // 向右分步旋转射击（转回起始朝向）
+    ROS_INFO("Rotating RIGHT...");
+    for (int i = 0; i < repeat_times && ros::ok(); i++)
+    {
+        Turn_safe_1(pub, -turn_speed, turn_steps);  // 右转一小角度（负角速度 = 顺时针 = 右）
+        ros::Duration(pause_sec).sleep();           // 停顿，激光常开完成射击
+    }
+}
+
+
+void Move2goal(MoveBaseClient &ac, ros::Publisher &pub, double x, double y, double yaw, string tag_name)
 {
     tf2::Quaternion quaternion;
     quaternion.setRPY(0, 0, yaw);
@@ -120,7 +139,7 @@ void Move2goal(MoveBaseClient &ac, ros ::Publisher &pub,double x, double y, doub
     {
     case actionlib::SimpleClientGoalState::SUCCEEDED:
         ROS_INFO("Target point %s (%.3f, %.3f, %.3f) reached successfully!", tag_name.c_str(), x, y, yaw);
-        SwingAndShoot(pub);
+        StepShoot(pub);   // 到达导航点后：分步旋转射击（转小角度→停顿→再转→再停顿）
         break;
 
     case actionlib::SimpleClientGoalState::ABORTED:
@@ -155,7 +174,7 @@ int main(int argc, char **argv)
 
     geometry_msgs::Twist vel_msg;
     ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
-    // 【修改】同时声明开启和关闭激光的服务客户端
+    // 同时声明开启和关闭激光的服务客户端
     ros::ServiceClient shoot_close_client = nh.serviceClient<std_srvs::Empty>("/close");
     ros::ServiceClient shoot_open_client = nh.serviceClient<std_srvs::Empty>("/shoot");
     std_srvs::Empty empty_srv;
@@ -164,19 +183,19 @@ int main(int argc, char **argv)
 
     int count = 0;
     ros::Rate loop_rate(10);
-    // 【修改】程序开始时，常开激光
+    // 程序开始时，常开激光
     ros::service::waitForService("/shoot");
     shoot_open_client.call(empty_srv);
     ROS_INFO("Laser ON (Always on until return)");
-    
-    Move_safe(pub,0.0,0.45,35);
-    Move_safe(pub,0.4,0.0,25);
+
+    Move_safe(pub, 0.0, 0.45, 35);
+    Move_safe(pub, 0.4, 0.0, 25);
     // Move_safe(pub,0.0,0.4,20);
     // sleep(0.5);
 
     Move1goal(ac, 1.4, 1.2, 0);
 
- // First target point
+  // First target point
     Move2goal(ac, pub, 2.50, 0.80, 0.785, "1");
 
     // Second target point
@@ -220,11 +239,12 @@ int main(int argc, char **argv)
 
     Move1goal(ac, 1.1, 1.0, -1.57);
     sleep(0.5);
-    
+
     Move1goal(ac, 0.3, 0.3, 0);//(0.05,0.05,0)
     // Move_safe(pub,0.0,-0.4,15);
     // Move_safe(pub,-0.4,0.0,15);
-    // 【修改】完成所有动作，返回起始点后，关闭激光
+
+    // 完成所有动作，返回起始点后，关闭激光
     ros::service::waitForService("/close");
     shoot_close_client.call(empty_srv);
     ROS_INFO("Returned to start. Laser OFF.");
