@@ -70,17 +70,17 @@ void SwingAndShoot(ros ::Publisher &pub)
     ros::Rate loop_rate(10);
     ROS_INFO("Laser ON, starting swing...");
     // 参数
-    const double swing_speed = 0.27;      // 角速度 rad/s
+    const double swing_speed = 0.18;      // 角速度 rad/s
     const double swing_angle = 0.262;   // 15度 = π/12 弧度
     const int one_way_steps = (int)(swing_angle / swing_speed / 0.1);  // 约10步
-    // 左摆30度
+    // 左摆15度
     vel_msg.angular.z = swing_speed;
     for (int i = 0; i < one_way_steps && ros::ok(); i++)
     {
         pub.publish(vel_msg);
         loop_rate.sleep();
     }
-    // 右摆60度（从左20度 → 右20度）
+    // 右摆30度（从左20度 → 右20度）
     vel_msg.angular.z = -swing_speed;
     for (int i = 0; i < one_way_steps * 2 && ros::ok(); i++)
     {
@@ -169,10 +169,12 @@ int main(int argc, char **argv)
     shoot_open_client.call(empty_srv);
     ROS_INFO("Laser ON (Always on until return)");
     
-    // Move_safe(pub,0.0,0.4,30);
-    // Move_safe(pub,0.4,0.0,25);
+    Move_safe(pub,0.0,0.45,35);
+    Move_safe(pub,0.4,0.0,25);
     // Move_safe(pub,0.0,0.4,20);
     // sleep(0.5);
+
+    Move1goal(ac, 1.4, 1.2, 0);
 
     // First target point G
     Move2goal(ac, pub,2.54, 0.79, 0.785, "1");
@@ -196,7 +198,7 @@ int main(int argc, char **argv)
     Move2goal(ac, pub,1.585, 0.105, -2.355, "1");
     
     // Fourth target point
-    Move2goal(ac, pub,1.70, 2.48, 2.355, "1");
+    Move2goal(ac, pub,1.70, 2.49, 2.355, "1");
     
     // Fifth target point
     Move2goal(ac, pub,2.59, 2.40, 0.785, "1");//(2.5,2.41,0.785)
@@ -207,15 +209,18 @@ int main(int argc, char **argv)
     Move1goal(ac,1.40,1.40,-3.14);
     sleep(0.5);
     // Seventh target point
-    Move2goal(ac, pub,0.06, 1.77, -2.355, "1");
+    Move2goal(ac, pub,0.03, 1.63, -2.355, "1");
 
     // Eighth target point
-    Move2goal(ac, pub,0.08, 2.43, 2.355, "1");//x0.12 y2.50
+    Move2goal(ac, pub,0.13, 2.46, 2.355, "1");//x0.12 y2.50
     
     // nineth target point
     Move2goal(ac, pub,0.98, 2.36, 0.785, "1");
+
+    Move1goal(ac, 1.1, 1.0, -1.57);
+    sleep(0.5);
     
-    Move1goal(ac, 0.1, 0.1, 0);//(0.05,0.05,0)
+    Move1goal(ac, 0.3, 0.3, 0);//(0.05,0.05,0)
     // Move_safe(pub,0.0,-0.4,15);
     // Move_safe(pub,-0.4,0.0,15);
     // 【修改】完成所有动作，返回起始点后，关闭激光
