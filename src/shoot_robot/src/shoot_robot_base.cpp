@@ -94,23 +94,24 @@ void StepShoot(ros::Publisher &pub)
     ROS_INFO("Step shoot: rotate left, pause, repeat; then rotate right, pause, repeat...");
     // ===== 参数可调 =====
     const double turn_speed   = 0.18;    // 旋转角速度 rad/s（正值=左转，负值=右转）
-    const double step_angle   = 0.0875;  // 每次旋转角度（弧度），0.0875 rad ≈ 5°
-    const int    repeat_times = 5;       // 左、右各旋转-停顿循环次数
-    const double pause_sec    = 0.5;     // 每次停顿（射击）时间（秒）
+    const double step_angle   = 0.0697;  // 每次旋转角度（弧度），0.0875 rad ≈ 5°
+    // const int    left_repeat_times = 6;      // 左转循环次数
+    const int    right_repeat_times = 5 ; // 右转次数为左转的 2 倍（即 4 次）
+    const double pause_sec    = 0.8;     // 每次停顿（射击）时间（秒）
     // =====================
     const int turn_steps = (int)(step_angle / turn_speed / 0.1);  // 每次旋转的控制步数（10Hz，每步0.1s）
 
     // 向左分步旋转射击
-    ROS_INFO("Rotating LEFT...");
-    for (int i = 0; i < repeat_times && ros::ok(); i++)
-    {
-        Turn_safe_1(pub, turn_speed, turn_steps);   // 左转一小角度（正角速度 = 逆时针 = 左）
-        ros::Duration(pause_sec).sleep();           // 停顿，激光常开完成射击
-    }
+    // ROS_INFO("Rotating LEFT (%d times)...",left_repeat_times);
+    // for (int i = 0; i < left_repeat_times && ros::ok(); i++)
+    // {
+    //     Turn_safe_1(pub, turn_speed, turn_steps);   // 左转一小角度（正角速度 = 逆时针 = 左）
+    //     ros::Duration(pause_sec).sleep();           // 停顿，激光常开完成射击
+    // }
 
     // 向右分步旋转射击（转回起始朝向）
-    ROS_INFO("Rotating RIGHT...");
-    for (int i = 0; i < repeat_times && ros::ok(); i++)
+    ROS_INFO("Rotating RIGHT (%d times)...",right_repeat_times);
+    for (int i = 0; i < right_repeat_times && ros::ok(); i++)
     {
         Turn_safe_1(pub, -turn_speed, turn_steps);  // 右转一小角度（负角速度 = 顺时针 = 右）
         ros::Duration(pause_sec).sleep();           // 停顿，激光常开完成射击
@@ -188,18 +189,19 @@ int main(int argc, char **argv)
     shoot_open_client.call(empty_srv);
     ROS_INFO("Laser ON (Always on until return)");
 
-    Move_safe(pub, 0.0, 0.45, 35);
+    Move_safe(pub, 0.0, 0.45, 30);
     Move_safe(pub, 0.4, 0.0, 25);
     // Move_safe(pub,0.0,0.4,20);
     // sleep(0.5);
 
     Move1goal(ac, 1.4, 1.2, 0);
+    sleep(0.5);
 
   // First target point
-    Move2goal(ac, pub, 2.50, 0.80, 0.785, "1");
+    Move2goal(ac, pub, 2.50, 0.80, 0.966, "1");
 
     // Second target point
-    Move2goal(ac, pub, 2.35, -0.004, -0.785, "1");
+    Move2goal(ac, pub, 2.35, -0.004, -0.604, "1");
 
     // vel_msg.linear.x = -0.05;
     // count = 0;
@@ -214,28 +216,28 @@ int main(int argc, char **argv)
     // pub.publish(vel_msg);
 
    // Third target point
-    Move2goal(ac, pub, 1.584, 0.114, -2.355, "1");
+    Move2goal(ac, pub, 1.584, 0.114, -2.174, "1");
 
     // Fourth target point
-    Move2goal(ac, pub, 1.71, 2.47, 2.355, "1");
+    Move2goal(ac, pub, 1.71, 2.47, 2.536, "1");
 
     // Fifth target point
-    Move2goal(ac, pub, 2.51, 2.33, 0.785, "1");
+    Move2goal(ac, pub, 2.51, 2.33, 0.966, "1");
 
     // Sixth target point
-    Move2goal(ac, pub, 2.38, 1.51, -0.785, "1");
+    Move2goal(ac, pub, 2.38, 1.51, -0.604, "1");
 
     Move1goal(ac, 1.40, 1.40, -3.14);
     sleep(0.5);
 
     // Seventh target point
-    Move2goal(ac, pub, 0.10, 1.60, -2.355, "1");
+    Move2goal(ac, pub, 0.10, 1.60, -2.174, "1");
 
     // Eighth target point
-    Move2goal(ac, pub, 0.17, 2.45, 2.355, "1");
+    Move2goal(ac, pub, 0.17, 2.45, 2.536, "1");
 
     // Ninth target point
-    Move2goal(ac, pub, 0.93, 2.33, 0.785, "1");
+    Move2goal(ac, pub, 0.93, 2.33, 0.966, "1");
 
     Move1goal(ac, 1.1, 1.0, -1.57);
     sleep(0.5);
