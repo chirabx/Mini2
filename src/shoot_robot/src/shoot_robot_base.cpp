@@ -132,18 +132,20 @@ int main(int argc, char **argv)
     ros::Rate loop_rate(10);
     shoot_close_client.call(empty_srv);
 
-    Move_safe(pub,0.0,0.4,25);
+    Move_safe(pub, 0.0, 0.45, 35);
+    Move_safe(pub, 0.4, 0.0, 25);
+    Move1goal(ac, 1.4, 1.2, 0);
     
     // First target point G
-    Move2goal(ac, pub,2.54, 0.79, 0.785, "1");
+    Move2goal(ac, pub,2.50, 0.80, 0.785, "1");
     shoot_close_client.call(empty_srv);
 
     // //Second target point H
-    Move2goal(ac, pub,2.34, -0.005, -0.785, "1");
+    Move2goal(ac, pub,2.35, -0.004, -0.785, "1");
     shoot_close_client.call(empty_srv);
 
     // //Third target point I
-    Move2goal(ac, pub,1.585, 0.105, -2.355, "1");
+    Move2goal(ac, pub,1.585, 0.114, -2.355, "1");
     shoot_close_client.call(empty_srv);
 
     // Fourth target point
@@ -151,23 +153,25 @@ int main(int argc, char **argv)
     shoot_close_client.call(empty_srv);
 
     // Fifth target point
-    Move2goal(ac, pub,2.59, 2.40, 0.785, "1");//(2.5,2.41,0.785)
+    Move2goal(ac, pub,2.51, 2.33, 0.785, "1");//(2.5,2.41,0.785)
     shoot_close_client.call(empty_srv);
 
     // Sixth target point
     Move2goal(ac, pub,2.38, 1.52, -0.785, "1");
     shoot_close_client.call(empty_srv);
 
+    Move1goal(ac, 1.40, 1.40, -3.14);
+
     // Seventh target point
-    Move2goal(ac, pub,0.020, 1.80, -2.355, "1");
+    Move2goal(ac, pub,0.10, 1.60, -2.355, "1");
     shoot_close_client.call(empty_srv);
 
     // Eighth target point
-    Move2goal(ac, pub,0.06, 2.42, 2.355, "1");//x0.12 y2.50
+    Move2goal(ac, pub,0.17, 2.45, 2.355, "1");//x0.12 y2.50
     shoot_close_client.call(empty_srv); 
 
     // nineth target point
-    Move2goal(ac, pub,1, 2.45, 0.785, "1");
+    Move2goal(ac, pub,0.93, 2.33, 0.785, "1");
     shoot_close_client.call(empty_srv);
 
     Move1goal(ac, 0.2, 0.2, 0);//(0.05,0.05,0)
