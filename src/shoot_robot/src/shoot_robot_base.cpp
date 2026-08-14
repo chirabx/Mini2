@@ -70,7 +70,7 @@ void SwingAndShoot(ros ::Publisher &pub)
     ros::Rate loop_rate(10);
     ROS_INFO("Laser ON, starting swing...");
     // 参数
-    const double swing_speed = 0.08;      // 角速度 rad/s
+    const double swing_speed = 0.20;      // 角速度 rad/s
     const double swing_angle = 0.175;   // 20度 = π/6 弧度
     const int one_way_steps = (int)(swing_angle / swing_speed / 0.1);  // 约10步
     // 左摆20度
@@ -172,50 +172,66 @@ int main(int argc, char **argv)
     Move_safe(pub,0.0,0.4,25);
     Move_safe(pub,0.4,0.0,25);
     Move1goal(ac, 1.4, 1.2, 0);
-    sleep(0.5);
+    // sleep(0.5);
 
     // First target point G
     Move2goal(ac, pub,2.50, 0.80, 0.785, "1");
-    // shoot_close_client.call(empty_srv);
+    
 
     //Move1goal(ac, 0.877, 0.3, 1.57);
 
     // //Second target point H
-    Move2goal(ac, pub,2.35, -0.004, -0.785, "1");
-    // shoot_close_client.call(empty_srv);
+    Move2goal(ac, pub,2.33, -0.004, -0.785, "1");
+    //Move2goal(ac, pub, 2.34, -0.004, -0.785, "1");//kongdi
+
+    
 
     // //Third target point I
-    Move2goal(ac, pub,1.584, 0.114, -2.355, "1");
-    // shoot_close_client.call(empty_srv);
+    Move2goal(ac, pub,1.581, 0.116, -2.355, "1");
+    
 
     // Fourth target point
-    Move2goal(ac, pub,1.71, 2.47, 2.355, "1");
-    // shoot_close_client.call(empty_srv);
+    Move2goal(ac, pub,1.73, 2.47, 2.355, "1");
+    // vel_msg.linear.x = -0.10;
+    // count = 0;
+    // while (ros::ok() && count < 20)
+    // {
+    //     pub.publish(vel_msg);
+    //     loop_rate.sleep();
+    //     count++;
+    // }
+    // // Stop
+    // vel_msg.linear.x = 0.0;
+    // pub.publish(vel_msg);
+    
+    //Move2goal(ac, pub, 1.73, 2.44, 2.355, "1");//konhdi
+    
 
-    // Move1goal(ac, 1.100, 0.400, 0);
-
+   
     // Fifth target point
     Move2goal(ac, pub,2.51, 2.33, 0.785, "1");//(2.5,2.41,0.785)
-    // shoot_close_client.call(empty_srv);
+    
+
+   
 
     // Sixth target point
     Move2goal(ac, pub,2.38, 1.51, -0.785, "1");
-    // shoot_close_client.call(empty_srv);
-
-    Move1goal(ac,1.40,1.40,-3.14);
+    //Move2goal(ac, pub, 2.39, 1.53, -0.785, "1");kongdi
+    
+    Move1goal(ac,1.40,1.20,-3.14);//y1.4,1.2
 
     // Seventh target point
     Move2goal(ac, pub,0.10, 1.60, -2.355, "1");
-    // shoot_close_client.call(empty_srv);
+    
 
     // Eighth target point
-    Move2goal(ac, pub,0.17, 2.45, 2.355, "1");
-    // shoot_close_client.call(empty_srv);
+    Move2goal(ac, pub,0.14, 2.45, 2.355, "1");
+    
 
     // nineth target point
     Move2goal(ac, pub,0.93, 2.33, 0.785, "1");
-    // shoot_close_client.call(empty_srv);
-
+    
+   
     // Move1goal(ac, 0.55, 0.75, 0);
     // sleep(0.5);
     Move1goal(ac, 0.1, 0.1, 0);//(0.05,0.05,0)
