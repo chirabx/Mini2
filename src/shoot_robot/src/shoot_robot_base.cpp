@@ -198,10 +198,11 @@ int main(int argc, char **argv)
     sleep(0.5);
 
   // First target point
-    Move2goal(ac, pub, 2.50, 0.80, 0.966, "1");
+    Move2goal(ac, pub, 2.50, 0.80, 0.950, "1");
 
     // Second target point
-    Move2goal(ac, pub, 2.35, -0.004, -0.604, "1");
+    //Move2goal(ac, pub, 2.33, -0.004, -0.596, "1");
+    Move2goal(ac, pub, 2.34, -0.004, -0.580, "1");//kongdi
 
     // vel_msg.linear.x = -0.05;
     // count = 0;
@@ -216,28 +217,34 @@ int main(int argc, char **argv)
     // pub.publish(vel_msg);
 
    // Third target point
-    Move2goal(ac, pub, 1.584, 0.114, -2.174, "1");
+    Move2goal(ac, pub, 1.581, 0.116, -2.10, "1");
 
     // Fourth target point
-    Move2goal(ac, pub, 1.71, 2.47, 2.536, "1");
+    //Move2goal(ac, pub, 1.73, 2.47, 2.528, "1");
+    Move2goal(ac, pub, 1.73, 2.44, 2.532, "1");//konhdi
 
     // Fifth target point
-    Move2goal(ac, pub, 2.51, 2.33, 0.966, "1");
+    //Move2goal(ac, pub, 2.51, 2.33, 0.956, "1");
+    Move2goal(ac, pub, 2.51, 2.33, 0.967, "1");//kongdi
 
     // Sixth target point
-    Move2goal(ac, pub, 2.38, 1.51, -0.604, "1");
+   // Move2goal(ac, pub, 2.38, 1.51, -0.597, "1");
+    Move2goal(ac, pub, 2.39, 1.53, -0.597, "1");
 
-    Move1goal(ac, 1.40, 1.40, -3.14);
+    //Move1goal(ac, 1.40, 1.40, -3.14);beizhezhude1dian
+    //sleep(0.5);
+    Move1goal(ac, 1.40, 1.25, -3.14);  
     sleep(0.5);
-
     // Seventh target point
-    Move2goal(ac, pub, 0.10, 1.60, -2.174, "1");
+    Move2goal(ac, pub, 0.10, 1.60, -2.172, "1");
 
     // Eighth target point
-    Move2goal(ac, pub, 0.17, 2.45, 2.536, "1");
+    //Move2goal(ac, pub, 0.14, 2.45, 2.532, "1");
+    Move2goal(ac, pub, 0.14, 2.45, 2.530, "1");//kongdi
 
     // Ninth target point
-    Move2goal(ac, pub, 0.93, 2.33, 0.966, "1");
+    //Move2goal(ac, pub, 0.93, 2.33, 0.969, "1");
+    Move2goal(ac, pub, 0.93, 2.33, 0.964, "1");//kongdi
 
     Move1goal(ac, 1.1, 1.0, -1.57);
     sleep(0.5);
