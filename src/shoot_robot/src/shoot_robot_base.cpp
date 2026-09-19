@@ -71,7 +71,7 @@ void SwingAndShoot(ros ::Publisher &pub)
     ROS_INFO("Laser ON, starting swing...");
     // 参数
     const double swing_speed = 0.20;      // 角速度 rad/s
-    const double swing_angle = 0.175;   // 20度 = π/6 弧度
+    const double swing_angle = 0.262;   // 20度 = π/6 弧度
     const int one_way_steps = (int)(swing_angle / swing_speed / 0.1);  // 约10步
     // 左摆20度
     vel_msg.angular.z = swing_speed;
@@ -169,30 +169,19 @@ int main(int argc, char **argv)
     shoot_open_client.call(empty_srv);
     ROS_INFO("Laser ON (Always on until return)");
     
-    Move_safe(pub,0.0,0.4,25);
-    Move_safe(pub,0.4,0.0,25);
+    Move_safe(pub,0.0,0.4,30);
+    Move_safe(pub,0.4,0.0,15);
     Move1goal(ac, 1.4, 1.2, 0);
     // sleep(0.5);
 
-    // First target point G
-    Move2goal(ac, pub,2.50, 0.80, 0.785, "1");
-    
+    // First target point
+    Move2goal(ac, pub, 2.58, 0.70, 0.785, "1");//2.56, 0.84, 0.785
 
-    //Move1goal(ac, 0.877, 0.3, 1.57);
+    // Second target point 2222222222222222222222
+    Move2goal(ac, pub, 2.39, -0.23, -0.685, "1");//2.36, -0.014, -0.685
+    //Move2goal(ac, pub, 2.45, -0.02, -0.685, "1");//kongdi
 
-    // //Second target point H
-    Move2goal(ac, pub,2.33, -0.004, -0.785, "1");
-    //Move2goal(ac, pub, 2.34, -0.004, -0.785, "1");//kongdi
-
-    
-
-    // //Third target point I
-    Move2goal(ac, pub,1.581, 0.116, -2.355, "1");
-    
-
-    // Fourth target point
-    Move2goal(ac, pub,1.73, 2.47, 2.355, "1");
-    // vel_msg.linear.x = -0.10;
+    // vel_msg.linear.x = -0.05;
     // count = 0;
     // while (ros::ok() && count < 20)
     // {
@@ -203,40 +192,47 @@ int main(int argc, char **argv)
     // // Stop
     // vel_msg.linear.x = 0.0;
     // pub.publish(vel_msg);
-    
+
+    // Third target point
+    Move2goal(ac, pub, 1.571, 0.08, -2.315, "1");//1.581, 0.116, -2.355
+
+    // Fourth target point
+    Move2goal(ac, pub, 1.86, 2.43, 2.365, "1");//1.73, 2.47, 2.375
     //Move2goal(ac, pub, 1.73, 2.44, 2.355, "1");//konhdi
-    
 
-   
     // Fifth target point
-    Move2goal(ac, pub,2.51, 2.33, 0.785, "1");//(2.5,2.41,0.785)
-    
-
-   
+    Move2goal(ac, pub, 2.69, 2.15, 0.775, "1");//2.51, 2.33, 0.795
+    //Move2goal(ac, pub, 2.51, 2.33, 0.785, "1");//kongdi
 
     // Sixth target point
-    Move2goal(ac, pub,2.38, 1.51, -0.785, "1");
-    //Move2goal(ac, pub, 2.39, 1.53, -0.785, "1");kongdi
-    
-    Move1goal(ac,1.40,1.20,-3.14);//y1.4,1.2
+    Move2goal(ac, pub, 2.46, 1.29, -0.675, "1");//2.39, 1.49, -0.685
+    //Move2goal(ac, pub, 2.38, 1.51, -0.685, "1");//kongdi
+
+    //Move1goal(ac, 1.40, 1.40, -3.14);//左边挡板有箱子，遮点
+    //sleep(0.5);
+    Move1goal(ac, 1.40, 1.25, -3.14);  
+    sleep(0.5);
 
     // Seventh target point
-    Move2goal(ac, pub,0.10, 1.60, -2.355, "1");
-    
+    Move2goal(ac, pub, 0.07, 1.62, -2.355, "1");//0.10, 1.60, -2.355
 
     // Eighth target point
-    Move2goal(ac, pub,0.14, 2.45, 2.355, "1");
+    Move2goal(ac, pub, 0.26, 2.49, 2.365, "1");//0.14, 2.45, 2.355
+    // Move2goal(ac, pub, 0.14, 2.45, 2.355, "1");//kongdi
+
+    // Ninth target point
+    Move2goal(ac, pub, 1.11, 2.34, 0.785, "1");//0.93, 2.37, 0.785
+    // Move2goal(ac, pub, 0.93, 2.33, 0.785, "1");//kongdi
+   
+    // Move1goal(ac, 0.55, 0.75, -1.57);//下挡板有箱子
+    // sleep(0.5);
+
+    Move1goal(ac, 0.3, 0.3, -1.57);//(0.05,0.05,0)
+    
+    Move_safe(pub,0.0,-0.4,15);//15 10
+    Move_safe(pub,0.4,0.0,20);//15 
     
 
-    // nineth target point
-    Move2goal(ac, pub,0.93, 2.33, 0.785, "1");
-    
-   
-    // Move1goal(ac, 0.55, 0.75, 0);
-    // sleep(0.5);
-    Move1goal(ac, 0.1, 0.1, 0);//(0.05,0.05,0)
-    // Move_safe(pub,0.0,-0.4,15);
-    // Move_safe(pub,-0.4,0.0,15);
     // 【修改】完成所有动作，返回起始点后，关闭激光
     ros::service::waitForService("/close");
     shoot_close_client.call(empty_srv);
