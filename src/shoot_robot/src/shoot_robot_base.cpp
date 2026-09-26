@@ -165,7 +165,9 @@ int main(int argc, char **argv)
     // First target point
     Move2goal(ac, pub, 0.949, -0.950, -0.96, "1");//2.56, 0.84, 0.785
 
-    Move2goal(ac, pub, 1.020, 1.403, 0.510, "1");//2.36, -0.014, -0.685
+    // Second target point
+    //Move2goal(ac, pub, 1.020, 1.603, 0.510, "1");//2.36, -0.014, -0.685//kongdi 
+    Move2goal(ac, pub, 0.870, 1.703, 0.510, "1");//2.36, -0.014, -0.685//youzhangaiwu
 
     // vel_msg.linear.x = -0.05;
     // count = 0;
@@ -180,14 +182,17 @@ int main(int argc, char **argv)
     // pub.publish(vel_msg);
 
     // Third target point
-    Move2goal(ac, pub, 0.151, 1.540, 2.180, "1");//1.581, 0.116, -2.355
+    //Move2goal(ac, pub, 0.151, 1.540, 2.180, "1");//1.581, 0.116, -2.355//kongdi
+    Move2goal(ac, pub, 0.141, 1.440, 2.180, "1");//1.581, 0.116, -2.355//zaw
+
 
     // Fourth target point
-    Move2goal(ac, pub, 0.120, 0.718, -2.429, "1");//1.73, 2.47, 2.375
+    //Move2goal(ac, pub, 0.120, 0.718, -2.429, "1");//kd
+    Move2goal(ac, pub, 0.140, 0.718, -2.229, "1");//yzw
 
-    vel_msg.linear.x = -0.10;
+    vel_msg.linear.x = -0.20;
     count = 0;
-    while (ros::ok() && count < 40)
+    while (ros::ok() && count < 25)
     {
         pub.publish(vel_msg);
         loop_rate.sleep();
@@ -197,20 +202,20 @@ int main(int argc, char **argv)
     vel_msg.linear.x = 0.0;
     pub.publish(vel_msg);
 
-    Move2goal(ac, pub, 1.500, 1.000, 0, "1");
+    Move1goal(ac, 1.500, 0.700, 0);
 
     // Fifth target point
     Move2goal(ac, pub, 1.681, -0.860, -2.429, "1");
     // Sixth target point
-    Move2goal(ac, pub, 2.451, -0.783, -0.96, "1");//2.39, 1.49, -0.685
+    Move2goal(ac, pub, 2.551, -0.783, -0.96, "1");//2.39, 1.49, -0.685
     //Move2goal(ac, pub, 2.38, 1.51, -0.685, "1");//kongdi
 
     // Seventh target point
-    Move2goal(ac, pub, 2.306, -0.153, 0.510, "1");
+    Move2goal(ac, pub, 2.456, -0.133, 0.910, "1");
 
-    vel_msg.linear.x = -0.10;
+    vel_msg.linear.x = -0.20;
     count = 0;
-    while (ros::ok() && count < 40)
+    while (ros::ok() && count < 15)
     {
         pub.publish(vel_msg);
         loop_rate.sleep();
@@ -219,12 +224,17 @@ int main(int argc, char **argv)
     // Stop
     vel_msg.linear.x = 0.0;
     pub.publish(vel_msg);
+
+
+    Move1goal(ac, 1.800, 0.200, 0);
+
+
     // Eighth target point
-    Move2goal(ac, pub, 1.634, 1.514, 2.180, "1");//0.14, 2.45, 2.355
+    Move2goal(ac, pub, 1.734, 1.514, 2.100, "1");//0.14, 2.45, 2.355
     // Move2goal(ac, pub, 0.14, 2.45, 2.355, "1");//kongdi
 
     // Ninth target point
-    Move2goal(ac, pub, 2.550, 1.353, 0.710, "1");//0.93, 2.37, 0.785
+    Move2goal(ac, pub, 2.550, 1.553, 0.710, "1");//0.93, 2.37, 0.785
     // Move2goal(ac, pub, 0.93, 2.33, 0.785, "1");//kongdi
     // 【修改】完成所有动作，返回起始点后，关闭激光
     ros::service::waitForService("/close");
