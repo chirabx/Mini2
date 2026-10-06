@@ -160,7 +160,6 @@ int main(int argc, char **argv)
     vel_msg.linear.x = 0.0;
     pub.publish(vel_msg);
 
-    // Seventh target point A
     Move2goal(ac, 0.14, 1.58, -2.355, "1");
     shoot_close_client.call(empty_srv);
 
