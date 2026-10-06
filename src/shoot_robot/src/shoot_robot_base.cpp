@@ -12,9 +12,8 @@ using namespace std;
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 // Function declarations
-void Move2goal(MoveBaseClient &ac, ros::Publisher &pub,double x, double y, double yaw, string tag_name);
-void Move1goal(MoveBaseClient &ac, double x, double y, double yaw);
-void performRetryLogic(MoveBaseClient &ac, ros::Publisher &pub, double x, double y, double yaw, const std::string &tag_name);
+void Move2goal(MoveBaseClient &ac, ros::Publisher &pub,double x, double y, double yaw);
+void performRetryLogic(MoveBaseClient &ac, ros::Publisher &pub, double x, double y, double yaw);
 void SwingAndShoot(ros::Publisher &pub, double swing_speed, double swing_angle, int swing_times);
 void sleep(double second)
 {
@@ -22,7 +21,7 @@ void sleep(double second)
 }
 
 // Retry logic function
-void performRetryLogic(MoveBaseClient &ac, ros::Publisher &pub, double x, double y, double yaw, const std::string &tag_name)
+void performRetryLogic(MoveBaseClient &ac, ros::Publisher &pub, double x, double y, double yaw)
 {
     ros::NodeHandle nh;
     geometry_msgs::Twist vel_msg;
@@ -43,7 +42,7 @@ void performRetryLogic(MoveBaseClient &ac, ros::Publisher &pub, double x, double
     pub.publish(vel_msg);
 
     ROS_INFO("Retrying to move to target point (%.3f, %.3f, %.3f)", x, y, yaw);
-    Move2goal(ac, pub, x, y, yaw, tag_name);
+    Move2goal(ac, pub, x, y, yaw);
 }
 
 void Move_safe(ros::Publisher &pub, double linear_x, double linear_y, double distance)
@@ -113,7 +112,7 @@ void SwingAndShoot(ros::Publisher &pub, double swing_speed, double swing_angle, 
     }
 }
 
-void Move2goal(MoveBaseClient &ac, ros ::Publisher &pub,double x, double y, double yaw, string tag_name)
+void Move2goal(MoveBaseClient &ac, ros ::Publisher &pub,double x, double y, double yaw)
 {
     tf2::Quaternion quaternion;
     quaternion.setRPY(0, 0, yaw);
@@ -124,6 +123,10 @@ void Move2goal(MoveBaseClient &ac, ros ::Publisher &pub,double x, double y, doub
     goal.target_pose.pose.orientation.w = quaternion.w();
     goal.target_pose.header.frame_id = "map";
     goal.target_pose.header.stamp = ros::Time::now();
+
+    ac.cancelAllGoals();
+    ros::Duration(0.15).sleep();
+
     ac.sendGoal(goal);
     ROS_INFO("MoveBase Send Goal !!!");
     ac.waitForResult();
@@ -133,31 +136,14 @@ void Move2goal(MoveBaseClient &ac, ros ::Publisher &pub,double x, double y, doub
     switch (state.state_)
     {
     case actionlib::SimpleClientGoalState::SUCCEEDED:
-        ROS_INFO("Target point %s (%.3f, %.3f, %.3f) reached successfully!", tag_name.c_str(), x, y, yaw);
+        ROS_INFO("Target point (%.3f, %.3f, %.3f) reached successfully!", x, y, yaw);
         break;
 
     case actionlib::SimpleClientGoalState::ABORTED:
         ROS_WARN("Navigation aborted - possibly due to obstacles or path planning failure");
-        performRetryLogic(ac, pub, x, y, yaw, tag_name);
+        performRetryLogic(ac, pub, x, y, yaw);
         break;
     }
-    // sleep(0.5);
-}
-
-void Move1goal(MoveBaseClient &ac, double x, double y, double yaw)
-{
-    tf2::Quaternion quaternion;
-    quaternion.setRPY(0, 0, yaw);
-    move_base_msgs::MoveBaseGoal goal;
-    goal.target_pose.pose.position.x = x;
-    goal.target_pose.pose.position.y = y;
-    goal.target_pose.pose.orientation.z = quaternion.z();
-    goal.target_pose.pose.orientation.w = quaternion.w();
-    goal.target_pose.header.frame_id = "map";
-    goal.target_pose.header.stamp = ros::Time::now();
-    ac.sendGoal(goal);
-    ROS_INFO("MoveBase Send Goal !!!");
-    ac.waitForResult();
     // sleep(0.5);
 }
 
@@ -181,20 +167,45 @@ int main(int argc, char **argv)
     ros::service::waitForService("/shoot");
     shoot_open_client.call(empty_srv);
     ROS_INFO("Laser ON (Always on until return)");
-    // sleep(0.5);
-    Move1goal(ac,1.500,0.500,0.785);
+   
+    Move2goal(ac,pub,1.500,0.500,0.785);
+    //sleep(0.5);
     // First target point
-    Move2goal(ac, pub, 1.584, 1.654, 2.55, "1");//0.14, 2.45, 2.355
-    SwingAndShoot(pub, 0.20, 15.0, 2);           // 
+    Move2goal(ac, pub, 1.584, 1.654, 2.55);
+    SwingAndShoot(pub, 0.20, 15.0, 2);  
+
+    vel_msg.linear.x = -0.50;
+    count = 0;
+    while (ros::ok() && count < 30)
+    {
+        pub.publish(vel_msg);
+        loop_rate.sleep();
+        count++;
+    }
+    // Stop
+    vel_msg.linear.x = 0.0;
+    pub.publish(vel_msg);         
 
     // Ninth target point
-    Move2goal(ac, pub, 2.600, 1.10, 1.410, "1");//0.93, 2.37, 0.785
-    SwingAndShoot(pub, 0.10, 10.0, 3);           // 
+    Move2goal(ac, pub, 2.600, 1.10, 1.410);
+    SwingAndShoot(pub, 0.10, 10.0, 3);           
 
-    Move2goal(ac, pub, 1.584, 1.654, 2.55, "1");//0.14, 2.45, 2.355
+    Move2goal(ac, pub, 1.584, 1.654, 2.55);//0.14, 2.45, 2.355
     SwingAndShoot(pub, 0.20, 15.0, 2);
 
-    Move2goal(ac, pub, 2.600, 1.10, 1.410, "1");//0.93, 2.37, 0.785
+    vel_msg.linear.x = -0.50;
+    count = 0;
+    while (ros::ok() && count < 30)
+    {
+        pub.publish(vel_msg);
+        loop_rate.sleep();
+        count++;
+    }
+    // Stop
+    vel_msg.linear.x = 0.0;
+    pub.publish(vel_msg);   
+
+    Move2goal(ac, pub, 2.600, 1.10, 1.410);
     SwingAndShoot(pub, 0.10, 10.0, 3);
 
     // 【修改】完成所有动作，返回起始点后，关闭激光
