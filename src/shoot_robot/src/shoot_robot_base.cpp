@@ -7,14 +7,38 @@
 #include <std_srvs/Empty.h>
 #include <geometry_msgs/Twist.h>
 #include <cmath>
+#include <nav_msgs/Odometry.h>
 
 using namespace std;
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 // Function declarations
-void Move2goal(MoveBaseClient &ac, ros::Publisher &pub,double x, double y, double yaw);
+bool Move2goal(MoveBaseClient &ac, ros::Publisher &pub,double x, double y, double yaw);
 void performRetryLogic(MoveBaseClient &ac, ros::Publisher &pub, double x, double y, double yaw);
 void SwingAndShoot(ros::Publisher &pub, double swing_speed, double swing_angle, int swing_times);
+
+// ---------- 里程计反馈：用于卡死检测 ----------
+double g_x   = 0.0;
+double g_y   = 0.0;
+double g_yaw = 0.0;
+
+double normAngle(double a)            // 把角度规整到 (-PI, PI]
+{
+    while (a >  M_PI) a -= 2.0 * M_PI;
+    while (a < -M_PI) a += 2.0 * M_PI;
+    return a;
+}
+
+void odomCallback(const nav_msgs::Odometry::ConstPtr &msg)
+{
+    g_x = msg->pose.pose.position.x;
+    g_y = msg->pose.pose.position.y;
+    const geometry_msgs::Quaternion &q = msg->pose.pose.orientation;
+    double siny_cosp = 2.0 * (q.w * q.z + q.x * q.y);
+    double cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z);
+    g_yaw = atan2(siny_cosp, cosy_cosp);
+}
+
 void sleep(double second)
 {
     ros::Duration(second).sleep();
@@ -132,36 +156,97 @@ void Turn_safe_1(ros::Publisher &pub, double angular_z, double distance)
     pub.publish(vel_msg);
 }
 
-void Move2goal(MoveBaseClient &ac, ros ::Publisher &pub,double x, double y, double yaw)
+
+bool Move2goal(MoveBaseClient &ac, ros::Publisher &pub, double x, double y, double yaw)
 {
+    // ===== 可调参数 =====
+    const double STALL_TIMEOUT = 3.0;          // 卡住多久(秒)触发恢复
+    const double STALL_DIST    = 0.05;         // 3秒内净位移<5cm 视为卡住
+    const double STALL_YAW     = 0.17;         // 3秒内净转角<10°(0.17rad) 视为卡住
+    const double NEAR_GOAL     = 0.15;         // 距目标<15cm时不判卡死(防止在终点误打转)
+    const double SPIN_SPEED    = 2.0;          // 恢复时原地旋转角速度 rad/s 0.8
+    const double SPIN_ANGLE    = 2.0 * M_PI;   // 恢复旋转角度(360°)，想省时间改 M_PI(180°)
+    const int    MAX_RECOVER   = 2;            // 最多连续恢复次数，防死循环
+    // =====================
+
     tf2::Quaternion quaternion;
     quaternion.setRPY(0, 0, yaw);
-    move_base_msgs::MoveBaseGoal goal;
-    goal.target_pose.pose.position.x = x;
-    goal.target_pose.pose.position.y = y;
-    goal.target_pose.pose.orientation.z = quaternion.z();
-    goal.target_pose.pose.orientation.w = quaternion.w();
-    goal.target_pose.header.frame_id = "map";
-    goal.target_pose.header.stamp = ros::Time::now();
-    ac.cancelAllGoals();
-    ros::Duration(0.15).sleep();
-    ac.sendGoal(goal);
-    ROS_INFO("MoveBase Send Goal !!!");
-    ac.waitForResult();
-    actionlib::SimpleClientGoalState state = ac.getState();
 
-    switch (state.state_)
+    int recover_count = 0;
+
+    while (ros::ok() && recover_count <= MAX_RECOVER)
     {
-    case actionlib::SimpleClientGoalState::SUCCEEDED:
-        ROS_INFO("Target point (%.3f, %.3f, %.3f) reached successfully!", x, y, yaw);
-        break;
-    case actionlib::SimpleClientGoalState::ABORTED:
-        ROS_WARN("Navigation aborted - possibly due to obstacles or path planning failure");
-        performRetryLogic(ac, pub, x, y, yaw);
-        break;
+        move_base_msgs::MoveBaseGoal goal;
+        goal.target_pose.pose.position.x = x;
+        goal.target_pose.pose.position.y = y;
+        goal.target_pose.pose.orientation.z = quaternion.z();
+        goal.target_pose.pose.orientation.w = quaternion.w();
+        goal.target_pose.header.frame_id = "map";
+        goal.target_pose.header.stamp = ros::Time::now();
 
+        ac.cancelAllGoals();
+        ros::Duration(0.15).sleep();
+        ac.sendGoal(goal);
+        ROS_INFO("MoveBase Send Goal to (%.3f, %.3f, %.3f) [recover=%d]", x, y, yaw, recover_count);
+
+        // ---- 轮询等待 + 卡死检测（不再用阻塞的 waitForResult）----
+        ros::Rate rate(20);
+        ros::Time last_progress = ros::Time::now();
+        double last_x = g_x, last_y = g_y, last_yaw = g_yaw;
+        bool stalled = false;
+
+        while (ros::ok())
+        {
+            if (ac.getState().isDone()) break;      // 导航已结束(成功/失败/取消)
+
+            // 和"上次有进展"的位置比，判断是否还在有效移动
+            double dx = g_x - last_x, dy = g_y - last_y;
+            double dist = sqrt(dx * dx + dy * dy);
+            double dyaw = fabs(normAngle(g_yaw - last_yaw));
+            if (dist > STALL_DIST || dyaw > STALL_YAW)
+            {
+                last_progress = ros::Time::now();   // 有进展：刷新基准
+                last_x = g_x; last_y = g_y; last_yaw = g_yaw;
+            }
+
+            double dist_to_goal = sqrt((g_x - x) * (g_x - x) + (g_y - y) * (g_y - y));
+            if (dist_to_goal >= NEAR_GOAL &&
+                (ros::Time::now() - last_progress).toSec() > STALL_TIMEOUT)
+            {
+                stalled = true;
+                ROS_WARN("STALL detected (no progress > %.1fs), spinning to push the box...", STALL_TIMEOUT);
+                break;
+            }
+            ros::spinOnce();
+            rate.sleep();
+        }
+
+        if (!stalled)
+        {
+            if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+            {
+                ROS_INFO("Reached (%.3f, %.3f)!", x, y);
+                return true;
+            }
+            // 失败但不是卡死：后退一点再重发目标
+            ROS_WARN("Navigation aborted, back up and retry");
+            ac.cancelAllGoals();
+            Move_safe(pub, -0.1, 0.0, 10);          // 后退约 0.1m
+            recover_count++;
+            continue;
+        }
+
+        // ===== 卡死恢复：取消导航，原地旋转顶开箱子，然后重新导航 =====
+        ac.cancelAllGoals();
+        ros::Duration(0.1).sleep();
+        int spin_counts = (int)round((SPIN_ANGLE / SPIN_SPEED) * 10.0);  // Turn_safe_1 是 10Hz 计数
+        Turn_safe_1(pub, SPIN_SPEED, spin_counts);
+        recover_count++;
+        ROS_INFO("Recovery spin done, re-navigating (attempt %d)...", recover_count);
     }
-    // sleep(0.5);
+
+    ROS_ERROR("Give up reaching (%.3f, %.3f) after %d recoveries", x, y, MAX_RECOVER);
+    return false;
 }
 
 
@@ -171,6 +256,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     geometry_msgs::Twist vel_msg;
     ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
+    ros::Subscriber odom_sub = nh.subscribe("/odom", 1, odomCallback);   // 卡死检测用
     // 【修改】同时声明开启和关闭激光的服务客户端
     ros::ServiceClient shoot_close_client = nh.serviceClient<std_srvs::Empty>("/close");
     ros::ServiceClient shoot_open_client = nh.serviceClient<std_srvs::Empty>("/shoot");
@@ -186,83 +272,107 @@ int main(int argc, char **argv)
     ROS_INFO("Laser ON (Always on until return)");
 
     
+
     //First target point
-    Move2goal(ac, pub, 0.949, -0.950, -0.96);
-    SwingAndShoot(pub, 0.20, 20.0, 1); 
-    Turn_safe_1(pub,0.5,46);
+    if (Move2goal(ac, pub, 0.949, -0.950, -0.950))
+    {
+        SwingAndShoot(pub, 0.20, 20.0, 1);
+        Turn_safe_1(pub,0.5,46);
+    }
+    else { ROS_WARN("Point 1 unreachable, skip shooting, go next."); }
 
     // Second target point
-    Move2goal(ac, pub, 0.870, 1.653, 0.410);
-    SwingAndShoot(pub, 0.20, 20.0, 1); 
-    Turn_safe_1(pub,0.5,46);
+    if (Move2goal(ac, pub, 0.870, 1.633, 0.410))
+    {
+        SwingAndShoot(pub, 0.20, 20.0, 1);
+        Turn_safe_1(pub,0.5,46);
+    }
+    else { ROS_WARN("Point 2 unreachable, skip shooting, go next."); }
 
     // Third target point
-    Move2goal(ac, pub, 0.111, 1.490, 2.180);
-    SwingAndShoot(pub, 0.20, 20.0, 1);
-    Turn_safe_1(pub,0.5,46);
-
+    if (Move2goal(ac, pub, 0.1000, 1.565, 2.180))
+    {
+        SwingAndShoot(pub, 0.20, 20.0, 1);
+        Turn_safe_1(pub,0.5,46);
+    }
+    else { ROS_WARN("Point 3 unreachable, skip shooting, go next."); }
 
     // Fourth target point
-    Move2goal(ac, pub, 0.160, 0.818, -2.229);
-    SwingAndShoot(pub, 0.20, 20.0, 1);
-
-    vel_msg.linear.x = -0.20;
-    count = 0;
-    while (ros::ok() && count < 25)
+    if (Move2goal(ac, pub, 0.160, 0.818, -2.229))
     {
-        pub.publish(vel_msg);
-        loop_rate.sleep();
-        count++;
+        SwingAndShoot(pub, 0.20, 20.0, 1);
 
+        //中转
+        vel_msg.linear.x = -0.20;
+        count = 0;
+        while (ros::ok() && count < 25)
+        {
+            pub.publish(vel_msg);
+            loop_rate.sleep();
+            count++;
+        }
+        Turn_safe_1(pub,0.5,24);
+        Move_safe(pub,0.4,0.0,13);
+        Move2goal(ac, pub,1.500, 0.500, -0.8);
     }
-    //中转
-
-    Turn_safe_1(pub,0.5,24);
-    Move_safe(pub,0.4,0.0,13);
-    Move2goal(ac, pub,1.500, 0.500, 0);
+    else { ROS_WARN("Point 4 unreachable, skip shooting, go next."); }
 
     // Fifth target point
-    Move2goal(ac, pub, 1.681, -0.860, -2.429);
-    SwingAndShoot(pub, 0.20, 20.0, 1);
-    Turn_safe_1(pub,0.5,40);
+    if (Move2goal(ac, pub, 1.681, -0.860, -2.429))
+    {
+        SwingAndShoot(pub, 0.20, 20.0, 1);
+        Turn_safe_1(pub,0.5,40);
+    }
+    else { ROS_WARN("Point 5 unreachable, skip shooting, go next."); }
 
     // Sixth target point
-    Move2goal(ac, pub, 2.551, -0.783, -1.16);
-    SwingAndShoot(pub, 0.20, 20.0, 1);
-    Turn_safe_1(pub,0.5,47);
+    if (Move2goal(ac, pub, 2.517, -0.813, -1.16))
+    {
+        SwingAndShoot(pub, 0.20, 20.0, 1);
+        Turn_safe_1(pub,0.5,47);
+    }
+    else { ROS_WARN("Point 6 unreachable, skip shooting, go next."); }
 
     // Seventh target point
-    Move2goal(ac, pub, 2.456, -0.100, 0.910);
-    SwingAndShoot(pub, 0.20, 20.0, 1);
-
-    vel_msg.linear.x = -0.20;
-    count = 0;
-    while (ros::ok() && count < 15)
+    if (Move2goal(ac, pub, 2.456, -0.100, 0.65))
     {
+        SwingAndShoot(pub, 0.20, 20.0, 1);
+
+        vel_msg.linear.x = -0.20;
+        count = 0;
+        while (ros::ok() && count < 15)
+        {
+            pub.publish(vel_msg);
+            loop_rate.sleep();
+            count++;
+        }
+        // Stop
+        vel_msg.linear.x = 0.0;
         pub.publish(vel_msg);
-        loop_rate.sleep();
-        count++;
+        //中转
+        // Move2goal(ac, pub, 1.600, 0.200, 1.570);
+        Turn_safe_1(pub,0.5,29);
+        Move_safe(pub,0.4,0.0,13);
     }
-    // Stop
-    vel_msg.linear.x = 0.0;
-    pub.publish(vel_msg);
-    //中转
-    
-    // Move2goal(ac, pub, 1.600, 0.200, 1.570);
-    Turn_safe_1(pub,0.5,29);
-    Move_safe(pub,0.4,0.0,13);
+    else { ROS_WARN("Point 7 unreachable, skip shooting, go next."); }
 
     // Eighth target point
-    Move2goal(ac, pub, 1.634, 1.454, 2.100);
-    SwingAndShoot(pub, 0.20, 20.0, 1);
+    if (Move2goal(ac, pub, 1.634, 1.454, 2.100))
+    {
+        SwingAndShoot(pub, 0.20, 20.0, 1);
+    }
+    else { ROS_WARN("Point 8 unreachable, skip shooting, go next."); }
 
     // Ninth target point
-    Move2goal(ac, pub, 2.600, 1.503, 0.710);
-    SwingAndShoot(pub, 0.20, 20.0, 3);
+    if (Move2goal(ac, pub, 2.600, 1.503, 0.710))
+    {
+        SwingAndShoot(pub, 0.20, 20.0, 6);
+    }
+    else { ROS_WARN("Point 9 unreachable, skip shooting, go next."); }
+
     // 【修改】完成所有动作，返回起始点后，关闭激光
     ros::service::waitForService("/close");
     shoot_close_client.call(empty_srv);
     ROS_INFO("Returned to start. Laser OFF.");
     return 0;
 }
-
