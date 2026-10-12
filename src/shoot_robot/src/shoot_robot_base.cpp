@@ -185,10 +185,10 @@ int main(int argc, char **argv)
     shoot_open_client.call(empty_srv);
     ROS_INFO("Laser ON (Always on until return)");
     Move_safe(pub,0.2,0.0,10);
-    Turn_safe_1(pub,0.2,9);
-    Move_safe(pub,0.5,0.0,35);
-    Move2goal(ac,pub,1.500,0.500,0.785);
-    sleep(0.5);
+    Turn_safe_1(pub, 0.35, 7);
+    Move_safe(pub, 0.40, 0.0, 60);
+    Turn_safe_1(pub, 0.35, 45);
+
     //First target point
     Move2goal(ac, pub, 1.584, 1.654, 2.55);
     SwingAndShoot(pub, 0.20, 15.0, 2);  
@@ -206,25 +206,17 @@ int main(int argc, char **argv)
     pub.publish(vel_msg);         
 
     // Ninth target point
-    Move2goal(ac, pub, 2.700, 1.10, 1.510);
+    Move2goal(ac, pub, 2.690, 1.10, 1.510);
     SwingAndShoot(pub, 0.10, 10.0, 3);           
 
-    Move2goal(ac, pub, 1.584, 1.654, 2.55);//0.14, 2.45, 2.355
-    SwingAndShoot(pub, 0.20, 15.0, 2);
+    Move2goal(ac, pub, 1.727, -0.037, -1.733);//0.14, 2.45, 2.355
+    SwingAndShoot(pub, 0.10, 7.5, 2);
 
-    vel_msg.linear.x = -0.50;
-    count = 0;
-    while (ros::ok() && count < 30)
-    {
-        pub.publish(vel_msg);
-        loop_rate.sleep();
-        count++;
-    }
-    // Stop
-    vel_msg.linear.x = 0.0;
-    pub.publish(vel_msg);   
+    Turn_safe_1(pub, 1.5708, 20);
 
-    Move2goal(ac, pub, 2.700, 1.10, 1.510);
+     
+
+    Move2goal(ac, pub, 2.690, 1.10, 1.510);
     SwingAndShoot(pub, 0.10, 10.0, 3);
 
     // 【修改】完成所有动作，返回起始点后，关闭激光
