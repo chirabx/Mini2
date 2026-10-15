@@ -250,9 +250,9 @@ int main(int argc, char **argv)
 
 
     // Ninth target point
-    Move2goal(ac, pub, 2.690, 1.03, 1.510);
+    Move2goal(ac, pub, 2.670, 1.03, 1.510);
     SwingAndShoot(pub, 0.10, 10.0, 3);
-    Move_safe(pub, -0.40, 0.0, 15);           
+    Move_safe(pub, -0.40, 0.0, 10);           
 
     //First target point
     // Move2goal(ac, pub, 2.035, 0.8669, 2.1464);
@@ -263,9 +263,9 @@ int main(int argc, char **argv)
 
 
 
-    Move2goal(ac, pub, 2.690, 1.03, 1.510);
+    Move2goal(ac, pub, 2.670, 1.03, 1.510);
     SwingAndShoot(pub, 0.10, 10.0, 3);
-    Move_safe(pub, -0.40, 0.0, 15);      
+    Move_safe(pub, -0.40, 0.0, 10);      
 
     // 【修改】完成所有动作，返回起始点后，关闭激光
     ros::service::waitForService("/close");
