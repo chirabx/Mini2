@@ -11,9 +11,12 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   actionlib_msgs
   apriltags2_ros
+  geometry_msgs
   move_base_msgs
+  nav_msgs
   roscpp
   rospy
+  sensor_msgs
   serial
   std_msgs
   tf
@@ -144,6 +147,7 @@ add_executable(tf_echo_node src/tf_echo.cpp)
 add_executable(apriltag_detect_node src/apriltag_detect.cpp)
 add_executable(shoot_robot_base_node src/shoot_robot_base.cpp)
 add_executable(shoot_robot_node src/shoot_robot.cpp)
+add_executable(relocalizer src/relocalizer.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -174,6 +178,10 @@ target_link_libraries(shoot_robot_base_node
 )
 
 target_link_libraries(shoot_robot_node
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(relocalizer
   ${catkin_LIBRARIES}
 )
 
