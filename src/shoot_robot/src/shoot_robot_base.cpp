@@ -274,7 +274,7 @@ int main(int argc, char **argv)
     
 
     //First target point
-    if (Move2goal(ac, pub, 0.949, -0.950, -0.950))
+    if (Move2goal(ac, pub, 0.949, -0.950, -0.850))
     {
         SwingAndShoot(pub, 0.20, 20.0, 1);
         Turn_safe_1(pub,0.5,46);
@@ -290,7 +290,7 @@ int main(int argc, char **argv)
     else { ROS_WARN("Point 2 unreachable, skip shooting, go next."); }
 
     // Third target point
-    if (Move2goal(ac, pub, 0.1000, 1.565, 2.180))
+    if (Move2goal(ac, pub, 0.1100, 1.555, 2.300))
     {
         SwingAndShoot(pub, 0.20, 20.0, 1);
         Turn_safe_1(pub,0.5,46);
@@ -300,7 +300,7 @@ int main(int argc, char **argv)
     // Fourth target point
     if (Move2goal(ac, pub, 0.160, 0.818, -2.229))
     {
-        SwingAndShoot(pub, 0.20, 20.0, 1);
+        SwingAndShoot(pub, 0.15, 20.0, 1);
 
         //中转
         vel_msg.linear.x = -0.20;
@@ -318,7 +318,7 @@ int main(int argc, char **argv)
     else { ROS_WARN("Point 4 unreachable, skip shooting, go next."); }
 
     // Fifth target point
-    if (Move2goal(ac, pub, 1.681, -0.860, -2.429))
+    if (Move2goal(ac, pub, 1.681, -0.860, -2.529))
     {
         SwingAndShoot(pub, 0.20, 20.0, 1);
         Turn_safe_1(pub,0.5,40);
@@ -326,7 +326,7 @@ int main(int argc, char **argv)
     else { ROS_WARN("Point 5 unreachable, skip shooting, go next."); }
 
     // Sixth target point
-    if (Move2goal(ac, pub, 2.517, -0.813, -1.16))
+    if (Move2goal(ac, pub, 2.517, -0.803, -1.26))
     {
         SwingAndShoot(pub, 0.20, 20.0, 1);
         Turn_safe_1(pub,0.5,47);
@@ -334,9 +334,9 @@ int main(int argc, char **argv)
     else { ROS_WARN("Point 6 unreachable, skip shooting, go next."); }
 
     // Seventh target point
-    if (Move2goal(ac, pub, 2.456, -0.100, 0.65))
+    if (Move2goal(ac, pub, 2.456, -0.100, 0.75))
     {
-        SwingAndShoot(pub, 0.20, 20.0, 1);
+        SwingAndShoot(pub, 0.15, 20.0, 1);
 
         vel_msg.linear.x = -0.20;
         count = 0;
@@ -364,7 +364,7 @@ int main(int argc, char **argv)
     else { ROS_WARN("Point 8 unreachable, skip shooting, go next."); }
 
     // Ninth target point
-    if (Move2goal(ac, pub, 2.600, 1.503, 0.710))
+    if (Move2goal(ac, pub, 2.580, 1.483, 0.710))
     {
         SwingAndShoot(pub, 0.20, 20.0, 6);
     }
