@@ -237,33 +237,35 @@ int main(int argc, char **argv)
     shoot_open_client.call(empty_srv);
     ROS_INFO("Laser ON (Always on until return)");
     Move_safe(pub,0.2,0.0,10);
-    Turn_safe_1(pub, 0.35, 14);
-    Move_safe(pub, 0.40, 0.0, 30);
+    Turn_safe_1(pub, 0.35, 10);
+    Move_safe(pub, 0.40, 0.0,45);
     Reloc_Check(nh, pub);
 
 
     //First target point
     Move2goal(ac, pub, 1.604, 1.634, 2.55);
     SwingAndShoot(pub, 0.20, 15.0, 2);  
-    Move_safe(pub, -0.40, 0.0, 25);
+    Move_safe(pub, -0.40, 0.0, 40);
     Reloc_Check(nh, pub);
 
 
     // Ninth target point
-    Move2goal(ac, pub, 2.690, 1.10, 1.510);
-    SwingAndShoot(pub, 0.10, 10.0, 3);           
+    Move2goal(ac, pub, 2.690, 1.03, 1.510);
+    SwingAndShoot(pub, 0.10, 10.0, 3);
+    Move_safe(pub, -0.40, 0.0, 15);           
 
     //First target point
     // Move2goal(ac, pub, 2.035, 0.8669, 2.1464);
     // SwingAndShoot(pub, 0.10, 10.0, 2);  
     Move2goal(ac, pub, 1.604, 1.634, 2.55);
     SwingAndShoot(pub, 0.20, 15.0, 2);  
-    Move_safe(pub, -0.40, 0.0, 25);
+    Move_safe(pub, -0.40, 0.0, 40);
 
 
 
-    Move2goal(ac, pub, 2.690, 1.10, 1.510);
+    Move2goal(ac, pub, 2.690, 1.03, 1.510);
     SwingAndShoot(pub, 0.10, 10.0, 3);
+    Move_safe(pub, -0.40, 0.0, 15);      
 
     // 【修改】完成所有动作，返回起始点后，关闭激光
     ros::service::waitForService("/close");
