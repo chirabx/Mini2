@@ -243,16 +243,20 @@ int main(int argc, char **argv)
 
 
     //First target point
-    Move2goal(ac, pub, 1.604, 1.634, 2.55);
-    SwingAndShoot(pub, 0.20, 15.0, 2);  
-    Move_safe(pub, -0.40, 0.0, 35);
-    Reloc_Check(nh, pub);
+    Move2goal(ac, pub, 2.124, 1.114, 2.55);
+    SwingAndShoot(pub, 0.10, 10.0, 2);  
+    Move2goal(ac, pub, 2.124, 1.114, 1.57);
+    Move_safe(pub, 0.0, -0.40, 30);
+    sleep(5.0);
+
+    
 
 
     // Ninth target point
-    Move2goal(ac, pub, 2.670, 1.03, 1.510);
+    //Move2goal(ac, pub, 2.670, 1.03, 1.510);
     SwingAndShoot(pub, 0.10, 10.0, 3);
-    Move_safe(pub, -0.40, 0.0, 8);           
+    //Move_safe(pub, -0.40, 0.0, 8);  
+    Reloc_Check(nh, pub);         
 
     //First target point
     // Move2goal(ac, pub, 2.035, 0.8669, 2.1464);
