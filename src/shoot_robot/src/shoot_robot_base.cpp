@@ -16,6 +16,7 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 void Move2goal(MoveBaseClient &ac, ros::Publisher &pub,double x, double y, double yaw);
 void performRetryLogic(MoveBaseClient &ac, ros::Publisher &pub, double x, double y, double yaw);
 void SwingAndShoot(ros::Publisher &pub, double swing_speed, double swing_angle, int swing_times);
+void RSwingAndShoot(ros::Publisher &pub, double swing_speed, double swing_angle, int swing_times);
 void sleep(double second)
 {
     ros::Duration(second).sleep();
@@ -84,6 +85,52 @@ void Move_safe(ros::Publisher &pub, double linear_x, double linear_y, double dis
 }
 
 
+void RSwingAndShoot(ros::Publisher &pub, double swing_speed, double swing_angle, int swing_times)
+{
+    if (swing_times < 1)
+    {
+        ROS_WARN("SwingAndShoot: swing_times=%d < 1, use 1 instead", swing_times);
+        swing_times = 1;
+    }
+    if (swing_speed <= 0.0)
+    {
+        ROS_ERROR("SwingAndShoot: swing_speed=%.3f must be > 0, abort", swing_speed);
+        return;
+    }
+
+    const double angle_first = swing_angle * M_PI / 180.0;   // 首摆角度(弧度)
+    const double angle_full  = 2.0 * angle_first;            // 后续每摆角度
+    const double pause_sec   = 0.20;
+    ros::Rate loop_rate(50);
+    geometry_msgs::Twist vel_msg;
+
+    ROS_INFO("Laser ON, starting swing... speed=%.3f rad/s, angle=%.1f deg, times=%d",
+             swing_speed, swing_angle, swing_times);
+
+    for (int i = 0; i < swing_times && ros::ok(); i++)
+    {
+        const double target_rad = (i == 0) ? angle_first : angle_full;
+        const int    dir        = (i % 2 == 0) ? -1 : 1;     // 偶数次向左,奇数次向右
+        const double duration   = target_rad / swing_speed;
+        const ros::Time t0      = ros::Time::now();
+
+        vel_msg.angular.z = dir * swing_speed;
+        ROS_INFO("  swing %d/%d : %s %.1f deg, %.2f s",
+                 i + 1, swing_times, (dir > 0 ? "LEFT" : "RIGHT"),
+                 target_rad * 180.0 / M_PI, duration);
+
+        while (ros::ok() && (ros::Time::now() - t0).toSec() < duration)
+        {
+            pub.publish(vel_msg);
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+
+        vel_msg.angular.z = 0;
+        pub.publish(vel_msg);
+        ros::Duration(pause_sec).sleep();
+    }
+}
 void SwingAndShoot(ros::Publisher &pub, double swing_speed, double swing_angle, int swing_times)
 {
     if (swing_times < 1)
@@ -237,36 +284,90 @@ int main(int argc, char **argv)
     shoot_open_client.call(empty_srv);
     ROS_INFO("Laser ON (Always on until return)");
     Move_safe(pub,0.2,0.0,10);
-    Turn_safe_1(pub, 0.35, 10);
+    Turn_safe_1(pub, 0.35, 14);
     Move_safe(pub, 0.40, 0.0,45);
     Reloc_Check(nh, pub);
 
 
     //First target point
-    Move2goal(ac, pub, 1.604, 1.634, 2.55);
-    SwingAndShoot(pub, 0.20, 15.0, 2);  
-    Move_safe(pub, -0.40, 0.0, 35);
+    Move2goal(ac, pub, 2.104, 1.084, 2.37);
+    SwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    SwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    SwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    Move_safe(pub, -0.40, 0.0, 10);
     Reloc_Check(nh, pub);
 
 
     // Ninth target point
-    Move2goal(ac, pub, 2.670, 1.03, 1.510);
-    SwingAndShoot(pub, 0.10, 10.0, 3);
-    Move_safe(pub, -0.40, 0.0, 8);           
+    Move2goal(ac, pub, 2.670, 0.99, 1.480);
+    SwingAndShoot(pub, 0.10, 5.0, 1);  
+    sleep(0.5);
+    SwingAndShoot(pub, 0.10, 5.0, 1);  
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 5.0, 1); 
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 5.0, 1); 
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 5.0, 1); 
+    sleep(0.5);
+    SwingAndShoot(pub, 0.10, 5.0, 1);  
+    sleep(0.5);
+    SwingAndShoot(pub, 0.10, 5.0, 1);  
+    sleep(0.5);
+    SwingAndShoot(pub, 0.10, 5.0, 1);  
+    sleep(0.5);
+    Move_safe(pub, -0.40, 0.0, 4);           
 
     //First target point
-    // Move2goal(ac, pub, 2.035, 0.8669, 2.1464);
-    // SwingAndShoot(pub, 0.10, 10.0, 2);  
-    Move2goal(ac, pub, 1.604, 1.634, 2.55);
-    SwingAndShoot(pub, 0.20, 15.0, 2);  
-    Move_safe(pub, -0.40, 0.0,35);
+    Move2goal(ac, pub, 2.104, 1.084, 2.38);
+    SwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    SwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    SwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 3.0, 1);  
+    sleep(0.5);
+    Move_safe(pub, -0.40, 0.0, 10);
+  
 
 
-
-    Move2goal(ac, pub, 2.670, 1.03, 1.510);
-    SwingAndShoot(pub, 0.10, 10.0, 3);
-    Move_safe(pub, -0.40, 0.0, 8);      
-                                            
+    // Ninth target point
+    Move2goal(ac, pub, 2.670, 0.99, 1.480);
+   SwingAndShoot(pub, 0.10, 5.0, 1);  
+    sleep(0.5);
+    SwingAndShoot(pub, 0.10, 5.0, 1);  
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 5.0, 1); 
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 5.0, 1); 
+    sleep(0.5);
+    RSwingAndShoot(pub, 0.10, 5.0, 1); 
+    sleep(0.5);
+    SwingAndShoot(pub, 0.10, 5.0, 1);  
+    sleep(0.5);
+    SwingAndShoot(pub, 0.10, 5.0, 1);  
+    sleep(0.5);
+    SwingAndShoot(pub, 0.10, 5.0, 1);  
+    sleep(0.5);
+    Move_safe(pub, -0.40, 0.0, 8);          
     // 【修改】完成所有动作，返回起始点后，关闭激光
     ros::service::waitForService("/close");
     shoot_close_client.call(empty_srv);
